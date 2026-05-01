@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "packages/*"
+    "cocosVS/packages/*"
   ],
   "scripts": {
     "ascii": "node --import tsx scripts/run-ascii.ts",
