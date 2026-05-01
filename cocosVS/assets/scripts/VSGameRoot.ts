@@ -20,6 +20,12 @@ import { CocosSpriteLibrary } from "./CocosSpriteLibrary.ts";
 
 const { ccclass, property } = _decorator;
 
+const PLAYER_VISUAL_SIZE = 66;
+const ENEMY_VISUAL_SIZE = 56;
+const PROJECTILE_VISUAL_SIZE = 16;
+const PICKUP_VISUAL_SIZE = 18;
+const WEAPON_EFFECT_RADIUS_SCALE = 1.15;
+
 @ccclass("VSGameRoot")
 export class VSGameRoot extends Component {
   @property
@@ -94,16 +100,16 @@ export class VSGameRoot extends Component {
     gridNode.parent = this.worldLayer;
     this.drawGrid(gridNode, visible.width, visible.height, 64);
 
-    this.playerNode = this.createVisualNode("Player", 132);
+    this.playerNode = this.createVisualNode("Player", PLAYER_VISUAL_SIZE);
     this.playerNode.parent = this.worldLayer;
     this.auraNode = this.createRingNode("Aura", new Color(120, 220, 255, 120), 2);
     this.auraNode.parent = this.worldLayer;
     this.novaNode = this.createRingNode("Nova", new Color(255, 235, 120, 220), 3);
     this.novaNode.parent = this.worldLayer;
 
-    this.enemyPool = new CocosEntityPool(this.worldLayer, this.sprites, new Color(220, 80, 80, 255), 112);
-    this.projectilePool = new CocosEntityPool(this.worldLayer, this.sprites, new Color(255, 220, 80, 255), 16);
-    this.pickupPool = new CocosEntityPool(this.worldLayer, this.sprites, new Color(80, 220, 120, 255), 18);
+    this.enemyPool = new CocosEntityPool(this.worldLayer, this.sprites, new Color(220, 80, 80, 255), ENEMY_VISUAL_SIZE);
+    this.projectilePool = new CocosEntityPool(this.worldLayer, this.sprites, new Color(255, 220, 80, 255), PROJECTILE_VISUAL_SIZE);
+    this.pickupPool = new CocosEntityPool(this.worldLayer, this.sprites, new Color(80, 220, 120, 255), PICKUP_VISUAL_SIZE);
 
     this.hudLabel = this.createLabelNode("Hud", 18, new Color(255, 255, 255, 255));
     this.hudLabel.node.parent = canvasNode;
@@ -123,7 +129,7 @@ export class VSGameRoot extends Component {
       this.sprites.apply(
         this.playerNode,
         frame.render.player.spriteKey,
-        132,
+        PLAYER_VISUAL_SIZE,
         frame.render.elapsedSeconds,
         new Color(255, 255, 255, 255),
       );
@@ -207,7 +213,12 @@ export class VSGameRoot extends Component {
       (effect.y - centerY) * this.worldScale,
       0,
     );
-    this.drawRing(graphics, transform, effect.radius * this.worldScale, effect.alpha);
+    this.drawRing(
+      graphics,
+      transform,
+      effect.radius * this.worldScale * WEAPON_EFFECT_RADIUS_SCALE,
+      effect.alpha,
+    );
   }
 
   private drawBackground(node: Node, width: number, height: number): void {
