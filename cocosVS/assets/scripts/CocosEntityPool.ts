@@ -1,4 +1,5 @@
-import { Color, Graphics, Node, UITransform } from "cc";
+import { Color, Node, UITransform } from "cc";
+import { CocosSpriteLibrary } from "./CocosSpriteLibrary.ts";
 
 export interface SimpleEntityFrame {
   readonly visible: boolean;
@@ -7,15 +8,10 @@ export interface SimpleEntityFrame {
   readonly y: number;
 }
 
-function ensureGraphicsNode(color: Readonly<Color>, radius: number): Node {
+function ensureEntityNode(size: number): Node {
   const node = new Node();
   const transform = node.addComponent(UITransform);
-  transform.setContentSize(radius * 2, radius * 2);
-
-  const graphics = node.addComponent(Graphics);
-  graphics.fillColor = new Color(color);
-  graphics.circle(0, 0, radius);
-  graphics.fill();
+  transform.setContentSize(size, size);
   return node;
 }
 
@@ -24,13 +20,20 @@ export class CocosEntityPool<T extends SimpleEntityFrame> {
 
   public constructor(
     private readonly parent: Node,
+    private readonly sprites: CocosSpriteLibrary,
     private readonly color: Readonly<Color>,
-    private readonly radius: number,
+    private readonly size: number,
   ) {}
 
-  public sync(items: readonly T[], centerX: number, centerY: number, worldScale: number): void {
+  public sync(
+    items: readonly T[],
+    centerX: number,
+    centerY: number,
+    worldScale: number,
+    elapsedSeconds: number,
+  ): void {
     while (this.nodes.length < items.length) {
-      const node = ensureGraphicsNode(this.color, this.radius);
+      const node = ensureEntityNode(this.size);
       node.parent = this.parent;
       this.nodes.push(node);
     }
@@ -44,6 +47,13 @@ export class CocosEntityPool<T extends SimpleEntityFrame> {
       }
 
       node.active = true;
+      this.sprites.apply(
+        node,
+        (item as T & { spriteKey?: string }).spriteKey ?? "",
+        this.size,
+        elapsedSeconds,
+        this.color,
+      );
       node.setPosition(
         (item.x - centerX) * worldScale,
         (item.y - centerY) * worldScale,

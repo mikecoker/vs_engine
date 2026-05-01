@@ -11,6 +11,7 @@ function createFrame(): ClientFrame {
       player: {
         key: "player",
         visible: true,
+        spriteKey: "player_witch",
         x: 0,
         y: 0,
         hp: 10,

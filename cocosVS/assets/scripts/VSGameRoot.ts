@@ -4,8 +4,9 @@ import {
   Color,
   Component,
   Graphics,
-  Label,
   Node,
+  Label,
+  Sprite,
   UITransform,
   view,
 } from "cc";
@@ -15,6 +16,7 @@ import { loadPrototypeContentRegistry } from "../vs-runtime/src/sim/content/Cont
 import { createSim } from "../vs-runtime/src/sim/core/Sim.ts";
 import { CocosEntityPool } from "./CocosEntityPool.ts";
 import { CocosInputState } from "./CocosInputState.ts";
+import { CocosSpriteLibrary } from "./CocosSpriteLibrary.ts";
 
 const { ccclass, property } = _decorator;
 
@@ -27,6 +29,7 @@ export class VSGameRoot extends Component {
   public followPlayer = true;
 
   private readonly inputState = new CocosInputState();
+  private readonly sprites = new CocosSpriteLibrary();
   private readonly content = loadPrototypeContentRegistry();
   private readonly sim = createSim({}, this.content, 1);
   private readonly session = new ClientSession(this.sim, this.content);
@@ -91,16 +94,16 @@ export class VSGameRoot extends Component {
     gridNode.parent = this.worldLayer;
     this.drawGrid(gridNode, visible.width, visible.height, 64);
 
-    this.playerNode = this.createCircleNode("Player", new Color(255, 255, 255, 255), 10);
+    this.playerNode = this.createVisualNode("Player", 132);
     this.playerNode.parent = this.worldLayer;
     this.auraNode = this.createRingNode("Aura", new Color(120, 220, 255, 120), 2);
     this.auraNode.parent = this.worldLayer;
     this.novaNode = this.createRingNode("Nova", new Color(255, 235, 120, 220), 3);
     this.novaNode.parent = this.worldLayer;
 
-    this.enemyPool = new CocosEntityPool(this.worldLayer, new Color(220, 80, 80, 255), 8);
-    this.projectilePool = new CocosEntityPool(this.worldLayer, new Color(255, 220, 80, 255), 4);
-    this.pickupPool = new CocosEntityPool(this.worldLayer, new Color(80, 220, 120, 255), 5);
+    this.enemyPool = new CocosEntityPool(this.worldLayer, this.sprites, new Color(220, 80, 80, 255), 112);
+    this.projectilePool = new CocosEntityPool(this.worldLayer, this.sprites, new Color(255, 220, 80, 255), 16);
+    this.pickupPool = new CocosEntityPool(this.worldLayer, this.sprites, new Color(80, 220, 120, 255), 18);
 
     this.hudLabel = this.createLabelNode("Hud", 18, new Color(255, 255, 255, 255));
     this.hudLabel.node.parent = canvasNode;
@@ -117,6 +120,13 @@ export class VSGameRoot extends Component {
 
     if (this.playerNode) {
       this.playerNode.active = frame.render.player.visible;
+      this.sprites.apply(
+        this.playerNode,
+        frame.render.player.spriteKey,
+        132,
+        frame.render.elapsedSeconds,
+        new Color(255, 255, 255, 255),
+      );
       this.playerNode.setPosition(
         (frame.render.player.x - centerX) * this.worldScale,
         (frame.render.player.y - centerY) * this.worldScale,
@@ -124,9 +134,9 @@ export class VSGameRoot extends Component {
       );
     }
 
-    this.enemyPool?.sync(frame.render.enemies, centerX, centerY, this.worldScale);
-    this.projectilePool?.sync(frame.render.projectiles, centerX, centerY, this.worldScale);
-    this.pickupPool?.sync(frame.render.pickups, centerX, centerY, this.worldScale);
+    this.enemyPool?.sync(frame.render.enemies, centerX, centerY, this.worldScale, frame.render.elapsedSeconds);
+    this.projectilePool?.sync(frame.render.projectiles, centerX, centerY, this.worldScale, frame.render.elapsedSeconds);
+    this.pickupPool?.sync(frame.render.pickups, centerX, centerY, this.worldScale, frame.render.elapsedSeconds);
     this.renderWeaponEffects(frame, centerX, centerY);
 
     if (this.hudLabel) {
@@ -237,14 +247,13 @@ export class VSGameRoot extends Component {
     graphics.stroke();
   }
 
-  private createCircleNode(name: string, color: Readonly<Color>, radius: number): Node {
+  private createVisualNode(name: string, size: number): Node {
     const node = new Node(name);
     const transform = node.addComponent(UITransform);
-    transform.setContentSize(radius * 2, radius * 2);
-    const graphics = node.addComponent(Graphics);
-    graphics.fillColor = new Color(color);
-    graphics.circle(0, 0, radius);
-    graphics.fill();
+    transform.setContentSize(size, size);
+    const sprite = node.addComponent(Sprite);
+    sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+    node.addComponent(Graphics);
     return node;
   }
 
