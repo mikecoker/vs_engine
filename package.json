@@ -3,6 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "ascii": "node --import tsx scripts/run-ascii.ts",
+    "ascii:dump": "node --import tsx scripts/run-ascii.ts --dump",
     "test": "node --import tsx --test $(find tests -name '*.test.ts' | sort)",
     "test:watch": "node --import tsx --test --watch $(find tests -name '*.test.ts' | sort)",
     "typecheck": "tsc --noEmit"
