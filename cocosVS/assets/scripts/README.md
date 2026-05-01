@@ -28,4 +28,4 @@ Current limitations:
 - no authored prefabs or sprite assets yet
 - shared sim/client code now lives in `cocosVS/assets/vs-runtime`
 - root `src/client` and `src/sim` are compatibility symlinks into that package
-- `cocosVS/assets/shared/src` is also a symlink into that package so Creator and repo tests use one source of truth
+- Cocos scripts import directly from `assets/vs-runtime/src` so Creator only indexes one copy of the runtime

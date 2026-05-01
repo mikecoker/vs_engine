@@ -9,10 +9,10 @@ import {
   UITransform,
   view,
 } from "cc";
-import { ClientSession } from "../shared/src/client/app/ClientSession.ts";
-import type { ClientFrame } from "../shared/src/client/app/ClientFrame.ts";
-import { loadPrototypeContentRegistry } from "../shared/src/sim/content/ContentLoader.ts";
-import { createSim } from "../shared/src/sim/core/Sim.ts";
+import { ClientSession } from "../vs-runtime/src/client/app/ClientSession.ts";
+import type { ClientFrame } from "../vs-runtime/src/client/app/ClientFrame.ts";
+import { loadPrototypeContentRegistry } from "../vs-runtime/src/sim/content/ContentLoader.ts";
+import { createSim } from "../vs-runtime/src/sim/core/Sim.ts";
 import { CocosEntityPool } from "./CocosEntityPool.ts";
 import { CocosInputState } from "./CocosInputState.ts";
 

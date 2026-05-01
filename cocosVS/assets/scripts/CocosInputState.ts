@@ -1,5 +1,5 @@
 import { EventKeyboard, Input, KeyCode, input } from "cc";
-import type { ClientInputSource } from "../shared/src/client/input/ClientInputSource.ts";
+import type { ClientInputSource } from "../vs-runtime/src/client/input/ClientInputSource.ts";
 
 export class CocosInputState {
   private readonly held = new Set<KeyCode>();
