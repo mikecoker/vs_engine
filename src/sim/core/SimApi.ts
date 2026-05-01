@@ -1,4 +1,5 @@
 import type { DebugSnapshot } from "../debug/DebugSnapshot";
+import type { LevelUpPayload } from "../progression/UpgradeChoice";
 import type { RenderSnapshot } from "./RenderSnapshot";
 import type { RunState } from "./RunState";
 import type { SimConfig } from "./SimConfig";
@@ -52,4 +53,7 @@ export interface SimApi {
   setRunState(nextState: RunState): void;
   getRenderSnapshot(): RenderSnapshot;
   getDebugSnapshot(): DebugSnapshot;
+  getLevelUpPayload(): LevelUpPayload | null;
+  ensureLevelUpPayload(): LevelUpPayload | null;
+  selectUpgrade(choiceIndex: number): boolean;
 }
