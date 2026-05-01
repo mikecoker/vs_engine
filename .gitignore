@@ -30,3 +30,12 @@ pnpm-debug.log*
 # Misc
 tmp/
 .tmp/
+
+# Cocos Creator (cocosVS/)
+cocosVS/library/
+cocosVS/temp/
+cocosVS/local/
+cocosVS/build/
+cocosVS/profiles/
+cocosVS/native/
+cocosVS/node_modules/
