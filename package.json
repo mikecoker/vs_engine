@@ -2,6 +2,9 @@
   "name": "vs-engine",
   "private": true,
   "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "ascii": "node --import tsx scripts/run-ascii.ts",
     "ascii:dump": "node --import tsx scripts/run-ascii.ts --dump",

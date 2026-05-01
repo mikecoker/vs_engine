@@ -1,0 +1,5 @@
+{
+  "name": "@vs-engine/runtime",
+  "private": true,
+  "type": "module"
+}

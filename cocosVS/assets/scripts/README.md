@@ -26,4 +26,6 @@ Current controls:
 Current limitations:
 - visuals are debug primitives only
 - no authored prefabs or sprite assets yet
-- the script imports shared code from `../../../src/**`, so if Creator complains about external sources, the next step is to mirror or alias shared runtime code into the project more explicitly
+- shared sim/client code now lives in the local package `packages/vs-runtime`
+- root `src/client` and `src/sim` are compatibility symlinks into that package
+- `cocosVS/assets/shared/src` is also a symlink into that package so Creator and repo tests use one source of truth
