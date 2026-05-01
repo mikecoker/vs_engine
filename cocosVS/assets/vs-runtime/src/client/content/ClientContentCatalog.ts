@@ -10,6 +10,9 @@ export interface UpgradeVisualDef {
   readonly iconKey: string;
   readonly displayName: string;
   readonly description: string;
+  readonly behavior?: "projectile" | "aura" | "nova";
+  readonly baseAreaRadius?: number;
+  readonly baseDurationSeconds?: number;
 }
 
 export interface ClientContentCatalog {
@@ -64,6 +67,9 @@ export function createClientContentCatalog(content: SimContent): ClientContentCa
       iconKey: def.iconKey,
       displayName: def.displayName,
       description: def.description,
+      behavior: def.behavior,
+      baseAreaRadius: def.baseAreaRadius,
+      baseDurationSeconds: def.baseDurationSeconds,
     })),
     passives: content.passiveUpgrades.defs.map((def) => ({
       iconKey: def.iconKey,

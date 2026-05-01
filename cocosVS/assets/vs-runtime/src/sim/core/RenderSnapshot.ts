@@ -7,6 +7,7 @@ export interface PlayerRenderSnapshot {
   readonly exists: boolean;
   readonly x: number;
   readonly y: number;
+  readonly radius: number;
   readonly hp: number;
   readonly maxHp: number;
 }
@@ -25,6 +26,14 @@ export interface ProgressionRenderSnapshot {
   readonly queuedLevelUps: number;
 }
 
+export interface WeaponRenderSnapshot {
+  readonly activeCount: number;
+  readonly typeIds: Uint16Array;
+  readonly levels: Uint8Array;
+  readonly cooldownRemaining: Float32Array;
+  readonly lastFireElapsedSeconds: Float32Array;
+}
+
 export interface RenderSnapshot {
   readonly runState: RunState;
   readonly elapsedSeconds: number;
@@ -33,6 +42,7 @@ export interface RenderSnapshot {
   readonly projectiles: EntityRenderSnapshot;
   readonly pickups: EntityRenderSnapshot;
   readonly progression: ProgressionRenderSnapshot;
+  readonly weapons: WeaponRenderSnapshot;
 }
 
 export const EMPTY_ENTITY_RENDER_SNAPSHOT: Readonly<EntityRenderSnapshot> = {

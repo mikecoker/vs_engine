@@ -11,7 +11,7 @@ export const prototypePlayerCharacters: readonly PlayerCharacterDef[] = [
       maxHp: 100,
       moveSpeed: 160,
       radius: 12,
-      pickupRadius: 40,
+      pickupRadius: 96,
       armor: 0,
       might: 1,
       cooldownMultiplier: 1,

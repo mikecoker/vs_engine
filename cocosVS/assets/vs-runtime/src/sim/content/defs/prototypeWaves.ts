@@ -10,7 +10,7 @@ export const prototypeWaves: readonly WaveDef[] = [
       {
         enemyId: enemyArchetypeId("enemy.bat"),
         startSeconds: 0,
-        endSeconds: 30,
+        endSeconds: 600,
         intervalSeconds: 2.5,
         batchSize: 2,
         weight: 3,
@@ -19,7 +19,7 @@ export const prototypeWaves: readonly WaveDef[] = [
       {
         enemyId: enemyArchetypeId("enemy.skeleton"),
         startSeconds: 20,
-        endSeconds: 55,
+        endSeconds: 600,
         intervalSeconds: 4,
         batchSize: 2,
         weight: 2,
@@ -28,7 +28,7 @@ export const prototypeWaves: readonly WaveDef[] = [
       {
         enemyId: enemyArchetypeId("enemy.ghost"),
         startSeconds: 40,
-        endSeconds: 70,
+        endSeconds: 600,
         intervalSeconds: 5,
         batchSize: 1,
         weight: 1,

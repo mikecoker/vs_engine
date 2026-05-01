@@ -65,11 +65,11 @@ export const prototypePassiveUpgrades: readonly PassiveUpgradeDef[] = [
     iconKey: "passive_crown",
     maxLevel: 5,
     modifiersByLevel: [
-      [{ stat: "pickupRadius", mode: "add", value: 10 }],
-      [{ stat: "pickupRadius", mode: "add", value: 10 }],
-      [{ stat: "pickupRadius", mode: "add", value: 10 }],
-      [{ stat: "pickupRadius", mode: "add", value: 10 }],
-      [{ stat: "pickupRadius", mode: "add", value: 10 }],
+      [{ stat: "pickupRadius", mode: "add", value: 24 }],
+      [{ stat: "pickupRadius", mode: "add", value: 24 }],
+      [{ stat: "pickupRadius", mode: "add", value: 24 }],
+      [{ stat: "pickupRadius", mode: "add", value: 24 }],
+      [{ stat: "pickupRadius", mode: "add", value: 24 }],
     ],
   },
   {

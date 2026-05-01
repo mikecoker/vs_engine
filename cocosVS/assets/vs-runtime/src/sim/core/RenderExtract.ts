@@ -1,9 +1,11 @@
 import type { RenderSnapshot } from "./RenderSnapshot.ts";
 import type { World } from "../world/World.ts";
 import { ensureEnemyStore, syncEnemyRenderViews } from "../enemies/EnemyStore.ts";
+import { ensureWeaponRuntimeStore } from "../combat/WeaponRuntimeStore.ts";
 
 export function extractRenderSnapshot(world: World): RenderSnapshot {
   const enemies = ensureEnemyStore(world);
+  const weapons = ensureWeaponRuntimeStore(world);
   syncEnemyRenderViews(enemies);
 
   return {
@@ -13,6 +15,7 @@ export function extractRenderSnapshot(world: World): RenderSnapshot {
       exists: world.stores.player.exists,
       x: world.stores.player.posX,
       y: world.stores.player.posY,
+      radius: world.stores.player.radius,
       hp: world.stores.player.hp,
       maxHp: world.stores.player.maxHp,
     },
@@ -39,6 +42,13 @@ export function extractRenderSnapshot(world: World): RenderSnapshot {
       xp: world.stores.progression.xp,
       xpToNext: world.stores.progression.xpToNext,
       queuedLevelUps: world.stores.progression.queuedLevelUps,
+    },
+    weapons: {
+      activeCount: weapons.activeCount,
+      typeIds: weapons.weaponTypeIds,
+      levels: weapons.weaponLevels,
+      cooldownRemaining: weapons.cooldownRemaining,
+      lastFireElapsedSeconds: weapons.lastFireElapsedSeconds,
     },
   };
 }

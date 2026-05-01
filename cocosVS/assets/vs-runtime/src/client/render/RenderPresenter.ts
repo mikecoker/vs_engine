@@ -5,6 +5,7 @@ import { EnemyRenderPool, type EnemyViewModel } from "./EnemyRenderPool.ts";
 import { PickupRenderPool, type PickupViewModel } from "./PickupRenderPool.ts";
 import { presentPlayer, type PlayerViewModel } from "./PlayerPresenter.ts";
 import { ProjectileRenderPool, type ProjectileViewModel } from "./ProjectileRenderPool.ts";
+import { presentWeaponEffects, type WeaponEffectViewModel } from "./WeaponEffectPresenter.ts";
 
 export interface PresentedRenderFrame {
   readonly elapsedSeconds: number;
@@ -12,6 +13,7 @@ export interface PresentedRenderFrame {
   readonly enemies: readonly EnemyViewModel[];
   readonly projectiles: readonly ProjectileViewModel[];
   readonly pickups: readonly PickupViewModel[];
+  readonly weaponEffects: readonly WeaponEffectViewModel[];
 }
 
 export class RenderPresenter {
@@ -74,6 +76,7 @@ export class RenderPresenter {
       enemies: enemyItems,
       projectiles: projectileItems,
       pickups: pickupItems,
+      weaponEffects: presentWeaponEffects(snapshot, this.content),
     };
   }
 }

@@ -49,6 +49,7 @@ function createFrame(): ClientFrame {
           displayName: "Small XP Gem",
         },
       ],
+      weaponEffects: [],
     },
     hud: {
       hp: 10,

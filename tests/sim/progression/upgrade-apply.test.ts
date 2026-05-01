@@ -34,6 +34,29 @@ test("passive upgrades rebuild player runtime stats", () => {
   assert.equal(world.stores.player.statSnapshot.moveSpeed, 172);
 });
 
+test("pickup radius passive increases collection reach", () => {
+  const content = loadPrototypeContentRegistry();
+  const world = createWorld(mergeSimConfig(), content, RunState.Running, 42);
+  initializePlayerForRun(world.stores.player, content);
+  const progression = ensureProgressionStore(world);
+
+  const applied = applyUpgradeChoice(world, progression, {
+    choiceId: "passive:passive.crown:1",
+    kind: "passive",
+    contentIndex: content.passiveUpgrades.getIndex("passive.crown"),
+    contentId: "passive.crown",
+    displayName: "Crown",
+    description: "Improves experience pickup reach.",
+    iconKey: "passive_crown",
+    currentLevel: 0,
+    nextLevel: 1,
+    maxLevel: 5,
+  });
+
+  assert.equal(applied, true);
+  assert.equal(world.stores.player.pickupRadius, 120);
+});
+
 test("weapon unlock choices add a runtime slot", () => {
   const content = loadPrototypeContentRegistry();
   const world = createWorld(mergeSimConfig(), content, RunState.Running, 43);

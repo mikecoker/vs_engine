@@ -10,6 +10,7 @@ export interface WeaponRuntimeStore {
   weaponTypeIds: Uint16Array;
   weaponLevels: Uint8Array;
   cooldownRemaining: Float32Array;
+  lastFireElapsedSeconds: Float32Array;
   reset(): void;
   ensureCapacity(nextCapacity: number): void;
 }
@@ -40,12 +41,14 @@ function createWeaponRuntimeStore(initialCapacity = 4): WeaponRuntimeStore {
     weaponTypeIds: new Uint16Array(initialCapacity),
     weaponLevels: new Uint8Array(initialCapacity),
     cooldownRemaining: new Float32Array(initialCapacity),
+    lastFireElapsedSeconds: new Float32Array(initialCapacity),
     reset() {
       this.activeCount = 0;
       this.ownerCharacterId = null;
       this.weaponTypeIds.fill(0);
       this.weaponLevels.fill(0);
       this.cooldownRemaining.fill(0);
+      this.lastFireElapsedSeconds.fill(-1);
     },
     ensureCapacity(nextCapacity: number) {
       if (nextCapacity <= this.capacity) {
@@ -63,6 +66,11 @@ function createWeaponRuntimeStore(initialCapacity = 4): WeaponRuntimeStore {
       const nextCooldowns = new Float32Array(nextCapacity);
       nextCooldowns.set(this.cooldownRemaining.subarray(0, this.activeCount));
       this.cooldownRemaining = nextCooldowns;
+
+      const nextLastFire = new Float32Array(nextCapacity);
+      nextLastFire.fill(-1);
+      nextLastFire.set(this.lastFireElapsedSeconds.subarray(0, this.activeCount));
+      this.lastFireElapsedSeconds = nextLastFire;
       this.capacity = nextCapacity;
     },
   };
@@ -82,6 +90,7 @@ function loadWeaponIds(
     store.weaponTypeIds[index] = content.weapons.getIndex(weaponIds[index]);
     store.weaponLevels[index] = 1;
     store.cooldownRemaining[index] = 0;
+    store.lastFireElapsedSeconds[index] = -1;
   }
 
   store.activeCount = weaponIds.length;

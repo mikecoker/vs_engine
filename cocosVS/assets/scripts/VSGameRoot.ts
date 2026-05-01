@@ -35,6 +35,8 @@ export class VSGameRoot extends Component {
   private hudLabel: Label | null = null;
   private overlayLabel: Label | null = null;
   private playerNode: Node | null = null;
+  private auraNode: Node | null = null;
+  private novaNode: Node | null = null;
   private latestMoveX = 0;
   private latestMoveY = 0;
   private enemyPool: CocosEntityPool<ClientFrame["render"]["enemies"][number]> | null = null;
@@ -91,6 +93,10 @@ export class VSGameRoot extends Component {
 
     this.playerNode = this.createCircleNode("Player", new Color(255, 255, 255, 255), 10);
     this.playerNode.parent = this.worldLayer;
+    this.auraNode = this.createRingNode("Aura", new Color(120, 220, 255, 120), 2);
+    this.auraNode.parent = this.worldLayer;
+    this.novaNode = this.createRingNode("Nova", new Color(255, 235, 120, 220), 3);
+    this.novaNode.parent = this.worldLayer;
 
     this.enemyPool = new CocosEntityPool(this.worldLayer, new Color(220, 80, 80, 255), 8);
     this.projectilePool = new CocosEntityPool(this.worldLayer, new Color(255, 220, 80, 255), 4);
@@ -121,6 +127,7 @@ export class VSGameRoot extends Component {
     this.enemyPool?.sync(frame.render.enemies, centerX, centerY, this.worldScale);
     this.projectilePool?.sync(frame.render.projectiles, centerX, centerY, this.worldScale);
     this.pickupPool?.sync(frame.render.pickups, centerX, centerY, this.worldScale);
+    this.renderWeaponEffects(frame, centerX, centerY);
 
     if (this.hudLabel) {
       this.hudLabel.string =
@@ -149,6 +156,48 @@ export class VSGameRoot extends Component {
       }
       this.overlayLabel.string = lines.join("\n");
     }
+  }
+
+  private renderWeaponEffects(frame: ClientFrame, centerX: number, centerY: number): void {
+    let auraEffect = null;
+    let novaEffect = null;
+
+    for (const effect of frame.render.weaponEffects) {
+      if (effect.behavior === "aura") {
+        auraEffect = effect;
+      } else if (effect.behavior === "nova") {
+        novaEffect = effect;
+      }
+    }
+
+    this.syncRingNode(this.auraNode, auraEffect, centerX, centerY);
+    this.syncRingNode(this.novaNode, novaEffect, centerX, centerY);
+  }
+
+  private syncRingNode(
+    node: Node | null,
+    effect: ClientFrame["render"]["weaponEffects"][number] | null,
+    centerX: number,
+    centerY: number,
+  ): void {
+    if (!node) {
+      return;
+    }
+
+    const graphics = node.getComponent(Graphics);
+    const transform = node.getComponent(UITransform);
+    if (!graphics || !transform || !effect?.visible) {
+      node.active = false;
+      return;
+    }
+
+    node.active = true;
+    node.setPosition(
+      (effect.x - centerX) * this.worldScale,
+      (effect.y - centerY) * this.worldScale,
+      0,
+    );
+    this.drawRing(graphics, transform, effect.radius * this.worldScale, effect.alpha);
   }
 
   private drawBackground(node: Node, width: number, height: number): void {
@@ -197,6 +246,27 @@ export class VSGameRoot extends Component {
     graphics.circle(0, 0, radius);
     graphics.fill();
     return node;
+  }
+
+  private createRingNode(name: string, color: Readonly<Color>, lineWidth: number): Node {
+    const node = new Node(name);
+    const transform = node.addComponent(UITransform);
+    transform.setContentSize(16, 16);
+    const graphics = node.addComponent(Graphics);
+    graphics.strokeColor = new Color(color);
+    graphics.lineWidth = lineWidth;
+    node.active = false;
+    return node;
+  }
+
+  private drawRing(graphics: Graphics, transform: UITransform, radius: number, alpha: number): void {
+    const color = new Color(graphics.strokeColor);
+    color.a = Math.max(0, Math.min(255, Math.round(alpha * 255)));
+    graphics.clear();
+    graphics.strokeColor = color;
+    graphics.circle(0, 0, radius);
+    graphics.stroke();
+    transform.setContentSize(radius * 2 + 8, radius * 2 + 8);
   }
 
   private createLabelNode(name: string, fontSize: number, color: Readonly<Color>): Label {

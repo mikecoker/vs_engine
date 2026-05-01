@@ -19,7 +19,7 @@ test("player reset initializes from prototype content", () => {
   assert.equal(player.characterId, "player.witch");
   assert.equal(player.maxHp, 100);
   assert.equal(player.statSnapshot.moveSpeed, 160);
-  assert.equal(player.pickupRadius, 40);
+  assert.equal(player.pickupRadius, 96);
   assert.equal(player.hp, 100);
 });
 
@@ -42,5 +42,5 @@ test("player stat snapshot rebuild reflects additive and multiplicative modifier
   assert.equal(player.hp, 60);
   assert.equal(player.statSnapshot.moveSpeed, 240);
   assert.equal(player.statSnapshot.projectileCount, 3);
-  assert.equal(player.pickupRadius, 80);
+  assert.equal(player.pickupRadius, 192);
 });

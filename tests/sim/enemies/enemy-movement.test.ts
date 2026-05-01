@@ -9,6 +9,7 @@ import { createWorld } from "../../../src/sim/world/World";
 import { applyEnemySpawnCommands } from "../../../src/sim/enemies/EnemySpawnSystem";
 import { stepEnemyMovement } from "../../../src/sim/enemies/EnemyMovementSystem";
 import { ensureEnemyStore } from "../../../src/sim/enemies/EnemyStore";
+import { rebuildSpatialGrid } from "../../../src/sim/spatial/SpatialGridBuildSystem";
 
 test("enemy movement reduces distance to the player", () => {
   const config = mergeSimConfig();
@@ -42,4 +43,40 @@ test("enemy movement reduces distance to the player", () => {
 
   const after = Math.abs(store.posX[slot] - world.stores.player.posX);
   assert.equal(after < before, true);
+});
+
+test("enemy movement applies separation to overlapping mobs", () => {
+  const config = mergeSimConfig();
+  const world = createWorld(config, loadPrototypeContentRegistry(), RunState.Running, 37);
+  const context: FrameContext = {
+    dt: config.fixedStepSeconds,
+    tick: 0,
+    elapsedSeconds: 0,
+    frameInput: {
+      moveX: 0,
+      moveY: 0,
+      pausePressed: false,
+      confirmPressed: false,
+      cancelPressed: false,
+    },
+    config,
+    world,
+  };
+
+  world.stores.player.exists = true;
+  world.stores.player.posX = 0;
+  world.stores.player.posY = 0;
+  world.commands.enemySpawn.enqueue(0, 180, 0);
+  world.commands.enemySpawn.enqueue(0, 180, 0);
+  applyEnemySpawnCommands(context);
+
+  rebuildSpatialGrid(context);
+
+  const store = ensureEnemyStore(world);
+  const firstSlot = store.activeSlots[0];
+  const secondSlot = store.activeSlots[1];
+
+  stepEnemyMovement(context);
+
+  assert.notEqual(store.posY[firstSlot], store.posY[secondSlot]);
 });
