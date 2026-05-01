@@ -73,8 +73,14 @@ export class CocosSpriteLibrary {
       return;
     }
 
-    const entry = this.frames.get(spriteKey);
-    if (entry) {
+    if (this.frames.has(spriteKey)) {
+      const entry = this.frames.get(spriteKey);
+      if (!entry) {
+        sprite.spriteFrame = null;
+        drawFallbackCircle(graphics, fallbackColor, size);
+        return;
+      }
+
       const frameIndex = entry.frames.length <= 1
         ? 0
         : Math.floor(elapsedSeconds * entry.fps) % entry.frames.length;
