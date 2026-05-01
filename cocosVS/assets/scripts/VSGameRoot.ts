@@ -24,7 +24,7 @@ export class VSGameRoot extends Component {
   public worldScale = 2;
 
   @property
-  public followPlayer = false;
+  public followPlayer = true;
 
   private readonly inputState = new CocosInputState();
   private readonly content = loadPrototypeContentRegistry();
@@ -98,11 +98,11 @@ export class VSGameRoot extends Component {
 
     this.hudLabel = this.createLabelNode("Hud", 18, new Color(255, 255, 255, 255));
     this.hudLabel.node.parent = canvasNode;
-    this.hudLabel.node.setPosition(-visible.width / 2 + 20, visible.height / 2 - 24, 0);
+    this.hudLabel.node.setPosition(-visible.width / 2 + 20, visible.height / 2 - 20, 0);
 
     this.overlayLabel = this.createLabelNode("Overlay", 20, new Color(255, 235, 160, 255));
     this.overlayLabel.node.parent = canvasNode;
-    this.overlayLabel.node.setPosition(-visible.width / 2 + 20, visible.height / 2 - 80, 0);
+    this.overlayLabel.node.setPosition(-visible.width / 2 + 20, visible.height / 2 - 92, 0);
   }
 
   private renderFrame(frame: ClientFrame): void {
@@ -203,11 +203,12 @@ export class VSGameRoot extends Component {
     const node = new Node(name);
     const transform = node.addComponent(UITransform);
     transform.setContentSize(1100, 220);
+    transform.setAnchorPoint(0, 1);
     const label = node.addComponent(Label);
     label.fontSize = fontSize;
     label.lineHeight = fontSize + 4;
     label.color = new Color(color);
-    label.overflow = Label.Overflow.SHRINK;
+    label.overflow = Label.Overflow.CLAMP;
     label.horizontalAlign = Label.HorizontalAlign.LEFT;
     label.verticalAlign = Label.VerticalAlign.TOP;
     return label;
