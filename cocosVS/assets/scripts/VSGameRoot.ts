@@ -9,12 +9,12 @@ import {
   UITransform,
   view,
 } from "cc";
-import { ClientSession } from "../shared/src/client/app/ClientSession";
-import type { ClientFrame } from "../shared/src/client/app/ClientFrame";
-import { loadPrototypeContentRegistry } from "../shared/src/sim/content/ContentLoader";
-import { createSim } from "../shared/src/sim/core/Sim";
-import { CocosEntityPool } from "./CocosEntityPool";
-import { CocosInputState } from "./CocosInputState";
+import { ClientSession } from "../shared/src/client/app/ClientSession.ts";
+import type { ClientFrame } from "../shared/src/client/app/ClientFrame.ts";
+import { loadPrototypeContentRegistry } from "../shared/src/sim/content/ContentLoader.ts";
+import { createSim } from "../shared/src/sim/core/Sim.ts";
+import { CocosEntityPool } from "./CocosEntityPool.ts";
+import { CocosInputState } from "./CocosInputState.ts";
 
 const { ccclass, property } = _decorator;
 
