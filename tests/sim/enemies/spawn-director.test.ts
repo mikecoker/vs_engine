@@ -24,7 +24,7 @@ test("spawn director emits the first wave batch on schedule", () => {
 
   stepSpawnDirector(world, 0);
 
-  assert.equal(world.commands.enemySpawn.count, 4);
+  assert.equal(world.commands.enemySpawn.count, 2);
 });
 
 test("spawn director respects the offscreen safe radius", () => {

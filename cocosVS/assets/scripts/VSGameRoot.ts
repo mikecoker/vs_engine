@@ -21,7 +21,10 @@ const { ccclass, property } = _decorator;
 @ccclass("VSGameRoot")
 export class VSGameRoot extends Component {
   @property
-  public worldScale = 1;
+  public worldScale = 2;
+
+  @property
+  public followPlayer = false;
 
   private readonly inputState = new CocosInputState();
   private readonly content = loadPrototypeContentRegistry();
@@ -32,6 +35,8 @@ export class VSGameRoot extends Component {
   private hudLabel: Label | null = null;
   private overlayLabel: Label | null = null;
   private playerNode: Node | null = null;
+  private latestMoveX = 0;
+  private latestMoveY = 0;
   private enemyPool: CocosEntityPool<ClientFrame["render"]["enemies"][number]> | null = null;
   private projectilePool: CocosEntityPool<ClientFrame["render"]["projectiles"][number]> | null = null;
   private pickupPool: CocosEntityPool<ClientFrame["render"]["pickups"][number]> | null = null;
@@ -59,7 +64,10 @@ export class VSGameRoot extends Component {
       });
     }
 
-    const frame = this.session.step(dt, this.inputState.toClientInput());
+    const inputFrame = this.inputState.toClientInput();
+    this.latestMoveX = inputFrame.moveX;
+    this.latestMoveY = inputFrame.moveY;
+    const frame = this.session.step(dt, inputFrame);
     this.renderFrame(frame);
   }
 
@@ -71,6 +79,15 @@ export class VSGameRoot extends Component {
 
     this.worldLayer = new Node("WorldLayer");
     this.worldLayer.parent = canvasNode;
+    this.worldLayer.setPosition(0, 0, 0);
+
+    const backgroundNode = new Node("Background");
+    backgroundNode.parent = this.worldLayer;
+    this.drawBackground(backgroundNode, visible.width, visible.height);
+
+    const gridNode = new Node("Grid");
+    gridNode.parent = this.worldLayer;
+    this.drawGrid(gridNode, visible.width, visible.height, 64);
 
     this.playerNode = this.createCircleNode("Player", new Color(255, 255, 255, 255), 10);
     this.playerNode.parent = this.worldLayer;
@@ -89,8 +106,8 @@ export class VSGameRoot extends Component {
   }
 
   private renderFrame(frame: ClientFrame): void {
-    const centerX = frame.camera.centerX;
-    const centerY = frame.camera.centerY;
+    const centerX = this.followPlayer ? frame.camera.centerX : 0;
+    const centerY = this.followPlayer ? frame.camera.centerY : 0;
 
     if (this.playerNode) {
       this.playerNode.active = frame.render.player.visible;
@@ -110,7 +127,10 @@ export class VSGameRoot extends Component {
         `HP ${Math.round(frame.hud.hp)}/${Math.round(frame.hud.maxHp)}  ` +
         `LV ${frame.hud.level}  XP ${frame.hud.xp}/${frame.hud.xpToNext}  ` +
         `EN ${frame.debug.activeEnemyCount}  PR ${frame.debug.activeProjectileCount}  ` +
-        `PU ${frame.debug.activePickupCount}`;
+        `PU ${frame.debug.activePickupCount}\n` +
+        `POS ${frame.render.player.x.toFixed(1)}, ${frame.render.player.y.toFixed(1)}  ` +
+        `IN ${this.latestMoveX.toFixed(0)}, ${this.latestMoveY.toFixed(0)}  ` +
+        `CAM ${this.followPlayer ? "FOLLOW" : "FIXED"}`;
     }
 
     if (this.overlayLabel) {
@@ -125,9 +145,47 @@ export class VSGameRoot extends Component {
         lines.push("GAME OVER");
       } else {
         lines.push("Controls: WASD move, P pause, 1/2/3 choose, G XP, V wave");
+        lines.push(`Player vel readout comes from position delta; camera is ${this.followPlayer ? "following" : "fixed"}`);
       }
       this.overlayLabel.string = lines.join("\n");
     }
+  }
+
+  private drawBackground(node: Node, width: number, height: number): void {
+    const transform = node.addComponent(UITransform);
+    transform.setContentSize(width, height);
+    const graphics = node.addComponent(Graphics);
+    graphics.fillColor = new Color(18, 24, 34, 255);
+    graphics.rect(-width / 2, -height / 2, width, height);
+    graphics.fill();
+  }
+
+  private drawGrid(node: Node, width: number, height: number, spacing: number): void {
+    const transform = node.addComponent(UITransform);
+    transform.setContentSize(width, height);
+    const graphics = node.addComponent(Graphics);
+    graphics.lineWidth = 1;
+    graphics.strokeColor = new Color(50, 64, 82, 255);
+
+    for (let x = -Math.floor(width / 2); x <= Math.floor(width / 2); x += spacing) {
+      graphics.moveTo(x, -height / 2);
+      graphics.lineTo(x, height / 2);
+    }
+
+    for (let y = -Math.floor(height / 2); y <= Math.floor(height / 2); y += spacing) {
+      graphics.moveTo(-width / 2, y);
+      graphics.lineTo(width / 2, y);
+    }
+
+    graphics.stroke();
+
+    graphics.lineWidth = 2;
+    graphics.strokeColor = new Color(90, 120, 160, 255);
+    graphics.moveTo(-width / 2, 0);
+    graphics.lineTo(width / 2, 0);
+    graphics.moveTo(0, -height / 2);
+    graphics.lineTo(0, height / 2);
+    graphics.stroke();
   }
 
   private createCircleNode(name: string, color: Readonly<Color>, radius: number): Node {
@@ -144,7 +202,7 @@ export class VSGameRoot extends Component {
   private createLabelNode(name: string, fontSize: number, color: Readonly<Color>): Label {
     const node = new Node(name);
     const transform = node.addComponent(UITransform);
-    transform.setContentSize(900, 160);
+    transform.setContentSize(1100, 220);
     const label = node.addComponent(Label);
     label.fontSize = fontSize;
     label.lineHeight = fontSize + 4;
