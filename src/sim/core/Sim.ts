@@ -1,137 +1,17 @@
-import type { DebugSnapshot, SystemName } from "../debug/DebugSnapshot";
-import { SYSTEM_ORDER } from "../debug/DebugSnapshot";
-import { extractDebugCommandFrame } from "../debug/DebugCommands";
+import type { DebugSnapshot } from "../debug/DebugSnapshot";
 import { extractRenderSnapshot } from "./RenderExtract";
 import type { FrameContext } from "./FrameContext";
 import type { RenderSnapshot } from "./RenderSnapshot";
-import { RunState, canTransitionRunState, isSimulationAdvancingState } from "./RunState";
+import { RunState, isSimulationAdvancingState } from "./RunState";
 import { mergeSimConfig, type SimConfig } from "./SimConfig";
 import { EMPTY_SIM_INPUT, type SimInput } from "./SimInput";
 import type { SimApi, SimContent } from "./SimApi";
 import { createWorldFactory } from "../world/WorldFactory";
 import type { World } from "../world/World";
 import { resetWorld } from "../world/WorldReset";
-import { stepSpawnDirectorSystem } from "../enemies/SpawnDirectorSystem";
-import { applyEnemySpawnCommands } from "../enemies/EnemySpawnSystem";
-import { stepEnemyMovement } from "../enemies/EnemyMovementSystem";
-import { rebuildSpatialGrid } from "../spatial/SpatialGridBuildSystem";
-import { stepPlayerMovement } from "../player/PlayerMovementSystem";
-import { initializePlayerForRun } from "../player/PlayerReset";
-import { stepWeaponFire } from "../combat/WeaponFireSystem";
-import { stepProjectileMovement } from "../projectiles/ProjectileMovementSystem";
-import { queryContactDamage } from "../combat/ContactDamageQuerySystem";
-import { queryProjectileHits } from "../projectiles/ProjectileHitQuerySystem";
-import { resolveDamage } from "../combat/DamageResolveSystem";
-
-type SystemPhase = "always" | "gameplay";
-
-interface SimSystem {
-  readonly name: SystemName;
-  readonly phase: SystemPhase;
-  execute(context: FrameContext): void;
-}
-
-function createSystemPipeline(): readonly SimSystem[] {
-  return SYSTEM_ORDER.map((name) => ({
-    name,
-    phase:
-      name === "RunStateSystem" || name === "InputApplySystem" || name === "RenderExtractSystem"
-        ? "always"
-        : "gameplay",
-    execute(context: FrameContext) {
-      switch (name) {
-        case "RunStateSystem":
-          runStateSystem(context);
-          return;
-        case "InputApplySystem":
-          inputApplySystem(context);
-          return;
-        case "SpawnDirectorSystem":
-          stepSpawnDirectorSystem(context);
-          return;
-        case "ApplySpawnCommandsSystem":
-          applyEnemySpawnCommands(context);
-          return;
-        case "PlayerMovementSystem":
-          stepPlayerMovement(context);
-          return;
-        case "EnemyMovementSystem":
-          stepEnemyMovement(context);
-          return;
-        case "WeaponFireSystem":
-          stepWeaponFire(context);
-          return;
-        case "ProjectileMovementSystem":
-          stepProjectileMovement(context);
-          return;
-        case "SpatialGridBuildSystem":
-          rebuildSpatialGrid(context);
-          return;
-        case "ContactDamageQuerySystem":
-          queryContactDamage(context);
-          return;
-        case "ProjectileHitQuerySystem":
-          queryProjectileHits(context);
-          return;
-        case "DamageResolveSystem":
-          resolveDamage(context);
-          return;
-        default:
-          return;
-      }
-    },
-  }));
-}
-
-function runStateSystem(context: FrameContext): void {
-  const { world } = context;
-
-  const pendingCount = world.commands.stateChange.count;
-  for (let index = 0; index < pendingCount; index += 1) {
-    const command = world.commands.stateChange.get(index);
-    applyRunState(world, command.nextState, command.reason);
-  }
-  world.commands.stateChange.clear();
-
-  if (world.runState.current === RunState.StartingRun) {
-    if (!world.stores.player.exists) {
-      initializePlayerForRun(world.stores.player, world.content);
-    }
-    applyRunState(world, RunState.Running, "startup-complete");
-  }
-}
-
-function inputApplySystem(context: FrameContext): void {
-  const { frameInput, world } = context;
-
-  world.scratch.latestMoveMagnitude = Math.hypot(frameInput.moveX, frameInput.moveY);
-
-  if (frameInput.pausePressed) {
-    if (world.runState.current === RunState.Running) {
-      applyRunState(world, RunState.Paused, "pause-pressed");
-    } else if (world.runState.current === RunState.Paused) {
-      applyRunState(world, RunState.Running, "pause-resume");
-    }
-  }
-
-  const debugCommandFrame = extractDebugCommandFrame(frameInput);
-  if (debugCommandFrame.grantXp) {
-    world.commands.xpGrant.enqueue(1);
-  }
-
-  if (debugCommandFrame.spawnWave) {
-    world.commands.enemySpawn.enqueue(0, 0, 0);
-  }
-}
-
-function applyRunState(world: World, nextState: RunState, reason: string): void {
-  if (!canTransitionRunState(world.runState.current, nextState)) {
-    return;
-  }
-
-  world.runState.current = nextState;
-  world.debug.lastRunStateChangeReason = reason;
-}
+import { ensureLevelUpChoices, getLevelUpPayload, selectUpgrade } from "../progression/ProgressionApi";
+import { applyRunState } from "./RunStateTransition";
+import { createSystemPipeline, type SimSystem } from "./systems/SystemRegistry";
 
 function createFrameContext(
   world: World,
@@ -212,6 +92,18 @@ export class Sim implements SimApi {
 
   public getFixedStepSeconds(): number {
     return this.config.fixedStepSeconds;
+  }
+
+  public getLevelUpPayload() {
+    return getLevelUpPayload(this.world);
+  }
+
+  public ensureLevelUpPayload() {
+    return ensureLevelUpChoices(this.world);
+  }
+
+  public selectUpgrade(choiceIndex: number): boolean {
+    return selectUpgrade(this.world, choiceIndex);
   }
 
   public getDebugSnapshot(): DebugSnapshot {

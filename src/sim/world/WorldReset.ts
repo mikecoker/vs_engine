@@ -23,6 +23,11 @@ export function resetWorld(world: World, seed: number, runState: RunState): void
   world.stores.progression.xp = 0;
   world.stores.progression.xpToNext = 5;
   world.stores.progression.queuedLevelUps = 0;
+  world.stores.progression.currentChoices.length = 0;
+  world.stores.progression.passiveUpgradeLevels.fill(0);
+  world.stores.progression.activeCurveIndex = -1;
+  world.stores.progression.initialized = false;
+  world.stores.progression.lastResetTick = -1;
 
   world.commands.enemySpawn.clear();
   world.commands.projectileSpawn.clear();

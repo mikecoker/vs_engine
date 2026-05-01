@@ -39,8 +39,9 @@ test("reset clears transient world state and queues", () => {
 
   const dirtyState = sim.getDebugSnapshot();
   assert.ok(dirtyState.activeEnemyCount >= 1);
-  assert.equal(dirtyState.queueSizes.xpGrant, 1);
+  assert.equal(dirtyState.queueSizes.xpGrant, 0);
   assert.equal(dirtyState.tick, 1);
+  assert.equal(sim.getRenderSnapshot().progression.xp, 1);
 
   sim.resetRun(77);
 

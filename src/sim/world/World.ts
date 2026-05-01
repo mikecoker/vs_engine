@@ -12,6 +12,23 @@ import {
 import { createDebugCounters, type DebugCounters } from "../debug/DebugSnapshot";
 import type { RunState } from "../core/RunState";
 import { createPlayerStore, type PlayerStore } from "../player/PlayerStore";
+import {
+  createEnemyStoreFromPlaceholder,
+  type EnemyStore,
+} from "../enemies/EnemyStore";
+import {
+  createProjectileStoreFromPlaceholder,
+  type ProjectileStore,
+} from "../projectiles/ProjectileStore";
+import {
+  createPickupStoreFromPlaceholder,
+  type PickupStore,
+} from "../pickups/PickupStore";
+import {
+  createProgressionStore,
+  resolvePassiveUpgradeCount,
+  type ProgressionStore,
+} from "../progression/ProgressionStore";
 
 export interface DynamicWorldStore {
   capacity: number;
@@ -24,19 +41,12 @@ export interface DynamicWorldStore {
   reset(): void;
 }
 
-export interface ProgressionWorldState {
-  level: number;
-  xp: number;
-  xpToNext: number;
-  queuedLevelUps: number;
-}
-
 export interface WorldStores {
   player: PlayerStore;
-  enemies: DynamicWorldStore;
-  projectiles: DynamicWorldStore;
-  pickups: DynamicWorldStore;
-  progression: ProgressionWorldState;
+  enemies: EnemyStore;
+  projectiles: ProjectileStore;
+  pickups: PickupStore;
+  progression: ProgressionStore;
 }
 
 export interface WorldCommands {
@@ -120,18 +130,18 @@ export function createDynamicWorldStore(capacity: number): DynamicWorldStore {
   };
 }
 
-export function createWorldStores(config: Readonly<SimConfig>): WorldStores {
+export function createWorldStores(
+  config: Readonly<SimConfig>,
+  content: SimContent,
+): WorldStores {
   return {
     player: createPlayerStore(),
-    enemies: createDynamicWorldStore(config.capacities.enemies),
-    projectiles: createDynamicWorldStore(config.capacities.projectiles),
-    pickups: createDynamicWorldStore(config.capacities.pickups),
-    progression: {
-      level: 1,
-      xp: 0,
-      xpToNext: 5,
-      queuedLevelUps: 0,
-    },
+    enemies: createEnemyStoreFromPlaceholder(createDynamicWorldStore(config.capacities.enemies)),
+    projectiles: createProjectileStoreFromPlaceholder(
+      createDynamicWorldStore(config.capacities.projectiles),
+    ),
+    pickups: createPickupStoreFromPlaceholder(createDynamicWorldStore(config.capacities.pickups)),
+    progression: createProgressionStore(resolvePassiveUpgradeCount(content)),
   };
 }
 
@@ -169,7 +179,7 @@ export function createWorld(
       tick: 0,
       elapsedSeconds: 0,
     },
-    stores: createWorldStores(config),
+    stores: createWorldStores(config, content),
     commands: createWorldCommands(),
     scratch: createWorldScratch(),
     debug: createDebugCounters(),
