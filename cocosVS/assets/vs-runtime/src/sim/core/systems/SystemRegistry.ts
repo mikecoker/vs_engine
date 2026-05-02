@@ -8,6 +8,8 @@ import { stepSpawnDirectorSystem } from "../../enemies/SpawnDirectorSystem.ts";
 import { queryProjectileHits } from "../../projectiles/ProjectileHitQuerySystem.ts";
 import { stepProjectileMovement } from "../../projectiles/ProjectileMovementSystem.ts";
 import { applyPickupSpawnCommands } from "../../pickups/PickupSpawnSystem.ts";
+import { stepHealthPickupSpawner } from "../../pickups/HealthPickupSpawnSystem.ts";
+import { stepMagnetPickupSpawner } from "../../pickups/MagnetPickupSpawnSystem.ts";
 import { stepPickupMagnetSystem } from "../../pickups/PickupMagnetSystem.ts";
 import { stepPickupCollectSystem } from "../../pickups/PickupCollectSystem.ts";
 import { stepPlayerMovement } from "../../player/PlayerMovementSystem.ts";
@@ -61,6 +63,8 @@ function resolveExecutor(name: SystemName): (context: FrameContext) => void {
       return inputApplySystem;
     case "ApplySpawnCommandsSystem":
       return (context) => {
+        stepHealthPickupSpawner(context);
+        stepMagnetPickupSpawner(context);
         applyEnemySpawnCommands(context);
         applyPickupSpawnCommands(context);
       };

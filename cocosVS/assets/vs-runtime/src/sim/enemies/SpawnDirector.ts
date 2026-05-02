@@ -1,4 +1,5 @@
 import type { World } from "../world/World.ts";
+import { DEFAULT_SIM_BOUNDS } from "../core/SimConfig.ts";
 import {
   getDefaultEnemyWave,
   getEnemyRuntimeContent,
@@ -6,8 +7,8 @@ import {
 } from "./EnemyArchetypeRuntime.ts";
 import { ensureEnemyStore, forEachActiveEnemySlot } from "./EnemyStore.ts";
 
-export const DEFAULT_SPAWN_SAFE_RADIUS = 240;
-export const DEFAULT_SPAWN_RING_THICKNESS = 120;
+export const DEFAULT_SPAWN_SAFE_RADIUS = 340;
+export const DEFAULT_SPAWN_RING_THICKNESS = 180;
 export const DEFAULT_MAX_ACTIVE_ENEMIES = 500;
 
 export interface SpawnDirectorState {
@@ -105,9 +106,10 @@ export function sampleOffscreenSpawnPoint(world: World, safeRadius: number, ring
   const radius = safeRadius + world.rng.next() * ringThickness;
   const angle = world.rng.next() * Math.PI * 2;
 
+  const bounds = world.config.bounds?.spawn ?? DEFAULT_SIM_BOUNDS.spawn;
   return {
-    x: centerX + Math.cos(angle) * radius,
-    y: centerY + Math.sin(angle) * radius,
+    x: Math.max(bounds.minX, Math.min(bounds.maxX, centerX + Math.cos(angle) * radius)),
+    y: Math.max(bounds.minY, Math.min(bounds.maxY, centerY + Math.sin(angle) * radius)),
   };
 }
 

@@ -6,4 +6,5 @@ export interface ClientInputSource {
   readonly cancelPressed?: boolean;
   readonly debugGrantXpPressed?: boolean;
   readonly debugSpawnWavePressed?: boolean;
+  readonly debugToggleInvulnerablePressed?: boolean;
 }

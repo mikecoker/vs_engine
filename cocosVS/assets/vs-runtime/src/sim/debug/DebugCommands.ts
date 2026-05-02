@@ -8,17 +8,20 @@ export type DebugCommand =
 export interface DebugCommandFrame {
   readonly grantXp: boolean;
   readonly spawnWave: boolean;
+  readonly toggleInvulnerable: boolean;
 }
 
 export const EMPTY_DEBUG_COMMAND_FRAME: Readonly<DebugCommandFrame> = {
   grantXp: false,
   spawnWave: false,
+  toggleInvulnerable: false,
 };
 
 export function extractDebugCommandFrame(input: Readonly<SimInput>): DebugCommandFrame {
   return {
     grantXp: input.debugGrantXpPressed ?? false,
     spawnWave: input.debugSpawnWavePressed ?? false,
+    toggleInvulnerable: input.debugToggleInvulnerablePressed ?? false,
   };
 }
 

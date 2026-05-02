@@ -53,6 +53,9 @@ export class CocosEntityPool<T extends SimpleEntityFrame> {
         this.size,
         elapsedSeconds,
         this.color,
+        (item as T & { tintColor?: { r: number; g: number; b: number; a: number } }).tintColor
+          ? new Color((item as T & { tintColor: { r: number; g: number; b: number; a: number } }).tintColor)
+          : undefined,
       );
       node.setPosition(
         (item.x - centerX) * worldScale,

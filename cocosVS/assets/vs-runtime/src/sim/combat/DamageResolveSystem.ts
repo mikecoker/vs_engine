@@ -9,6 +9,8 @@ import { RunState } from "../core/RunState.ts";
 import { clampDamageAmount } from "./DamageTypes.ts";
 
 const xpPickupIndexCache = new WeakMap<object, number>();
+const mediumXpPickupIndexCache = new WeakMap<object, number>();
+const largeXpPickupIndexCache = new WeakMap<object, number>();
 
 function isContentRegistry(value: SimContent): value is SimContent & ContentRegistry {
   const registry = value as Partial<ContentRegistry>;
@@ -21,25 +23,51 @@ function isContentRegistry(value: SimContent): value is SimContent & ContentRegi
 }
 
 function getDefaultXpPickupIndex(content: SimContent): number {
+  return getPickupIndexById(content, "pickup.xp_small", xpPickupIndexCache, "xp");
+}
+
+function getMediumXpPickupIndex(content: SimContent): number {
+  return getPickupIndexById(content, "pickup.xp_medium", mediumXpPickupIndexCache, "xp");
+}
+
+function getLargeXpPickupIndex(content: SimContent): number {
+  return getPickupIndexById(content, "pickup.xp_large", largeXpPickupIndexCache, "xp");
+}
+
+function getPickupIndexById(
+  content: SimContent,
+  pickupId: string,
+  cache: WeakMap<object, number>,
+  fallbackGrantKind: PickupDef["grantKind"],
+): number {
   if (!isContentRegistry(content)) {
     return -1;
   }
 
   const cacheKey = content as object;
-  const cached = xpPickupIndexCache.get(cacheKey);
+  const cached = cache.get(cacheKey);
   if (cached !== undefined) {
     return cached;
   }
 
   let foundIndex = -1;
   for (let index = 0; index < content.pickups.defs.length; index += 1) {
-    if (content.pickups.defs[index].grantKind === "xp") {
+    if (content.pickups.defs[index].id === pickupId) {
       foundIndex = index;
       break;
     }
   }
 
-  xpPickupIndexCache.set(cacheKey, foundIndex);
+  if (foundIndex < 0) {
+    for (let index = 0; index < content.pickups.defs.length; index += 1) {
+      if (content.pickups.defs[index].grantKind === fallbackGrantKind) {
+        foundIndex = index;
+        break;
+      }
+    }
+  }
+
+  cache.set(cacheKey, foundIndex);
   return foundIndex;
 }
 
@@ -59,7 +87,11 @@ function emitEnemyDeathConsequences(context: FrameContext, slot: number): void {
 
   const xpAmount = Math.max(0, deathInfo.xpValue);
   if (xpAmount > 0) {
-    const xpPickupIndex = getDefaultXpPickupIndex(context.world.content);
+    const xpPickupIndex = xpAmount >= 24
+      ? getLargeXpPickupIndex(context.world.content)
+      : xpAmount >= 8
+        ? getMediumXpPickupIndex(context.world.content)
+        : getDefaultXpPickupIndex(context.world.content);
     const pickupDef = getXpPickupDef(context.world.content, xpPickupIndex);
 
     if (pickupDef) {
@@ -116,4 +148,3 @@ export function resolveDamage(context: FrameContext): void {
 
   damageBuffer.clear();
 }
-

@@ -6,6 +6,7 @@ export interface SimInput {
   readonly cancelPressed: boolean;
   readonly debugGrantXpPressed?: boolean;
   readonly debugSpawnWavePressed?: boolean;
+  readonly debugToggleInvulnerablePressed?: boolean;
 }
 
 export const EMPTY_SIM_INPUT: Readonly<SimInput> = {
@@ -16,4 +17,5 @@ export const EMPTY_SIM_INPUT: Readonly<SimInput> = {
   cancelPressed: false,
   debugGrantXpPressed: false,
   debugSpawnWavePressed: false,
+  debugToggleInvulnerablePressed: false,
 };

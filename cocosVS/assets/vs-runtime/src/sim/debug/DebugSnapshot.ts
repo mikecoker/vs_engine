@@ -52,6 +52,7 @@ export interface DebugSnapshot {
   readonly activeEnemyCount: number;
   readonly activeProjectileCount: number;
   readonly activePickupCount: number;
+  readonly playerInvulnerable: boolean;
   readonly queueSizes: {
     readonly enemySpawn: number;
     readonly projectileSpawn: number;
@@ -86,6 +87,7 @@ export interface CreateDebugSnapshotArgs {
   readonly runState: RunState;
   readonly tick: number;
   readonly seed: number;
+  readonly playerInvulnerable: boolean;
   readonly counters: { snapshot(): DebugCounterValues };
 }
 
@@ -105,6 +107,7 @@ export function createDebugSnapshot(args: CreateDebugSnapshotArgs): DebugSnapsho
     activeEnemyCount: counters.activeEnemies,
     activeProjectileCount: counters.activeProjectiles,
     activePickupCount: counters.activePickups,
+    playerInvulnerable: args.playerInvulnerable,
     queueSizes: {
       enemySpawn: 0,
       projectileSpawn: 0,

@@ -4,6 +4,7 @@ import type { SimContent } from "../../sim/core/SimApi.ts";
 export interface EntityVisualDef {
   readonly spriteKey: string;
   readonly displayName: string;
+  readonly grantKind?: "xp" | "heal" | "magnet";
 }
 
 export interface UpgradeVisualDef {
@@ -62,6 +63,7 @@ export function createClientContentCatalog(content: SimContent): ClientContentCa
     pickups: content.pickups.defs.map((def) => ({
       spriteKey: def.spriteKey,
       displayName: def.displayName,
+      grantKind: def.grantKind,
     })),
     weapons: content.weapons.defs.map((def) => ({
       iconKey: def.iconKey,

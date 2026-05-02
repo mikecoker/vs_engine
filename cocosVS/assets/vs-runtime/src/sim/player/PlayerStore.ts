@@ -24,6 +24,7 @@ export interface PlayerStore {
   radius: number;
   hp: number;
   maxHp: number;
+  debugInvulnerable: boolean;
   invulnRemaining: number;
   invulnerabilityDurationSeconds: number;
   pickupRadius: number;
@@ -46,6 +47,7 @@ export function createPlayerStore(): PlayerStore {
     radius: DEFAULT_PLAYER_STAT_SNAPSHOT.radius,
     hp: DEFAULT_PLAYER_STAT_SNAPSHOT.maxHp,
     maxHp: DEFAULT_PLAYER_STAT_SNAPSHOT.maxHp,
+    debugInvulnerable: false,
     invulnRemaining: 0,
     invulnerabilityDurationSeconds: DEFAULT_PLAYER_INVULNERABILITY_SECONDS,
     pickupRadius: DEFAULT_PLAYER_STAT_SNAPSHOT.pickupRadius,

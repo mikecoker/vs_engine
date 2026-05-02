@@ -42,5 +42,6 @@ export function adaptCocosInput(source: Readonly<CocosInputSource>): SimInput {
     cancelPressed: source.cancelPressed ?? false,
     debugGrantXpPressed: source.debugGrantXpPressed ?? false,
     debugSpawnWavePressed: source.debugSpawnWavePressed ?? false,
+    debugToggleInvulnerablePressed: source.debugToggleInvulnerablePressed ?? false,
   };
 }

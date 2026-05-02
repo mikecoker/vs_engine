@@ -34,9 +34,33 @@ interface SpriteAssetEntry {
   readonly fps: number;
 }
 
-function buildHorizontalFrames(image: ImageAsset, frameCount: number): readonly SpriteFrame[] {
+interface SharedSheetLayout {
+  readonly resourceKey: string;
+  readonly cellSize: number;
+  readonly frameCount: number;
+  readonly rowBySpriteKey: Readonly<Record<string, number>>;
+}
+
+const SHARED_CHARACTER_SHEET: SharedSheetLayout = {
+  resourceKey: "sheets/all_chars",
+  cellSize: 513,
+  frameCount: 4,
+  rowBySpriteKey: {
+    player_witch: 0,
+    enemy_bat: 1,
+    enemy_ghost: 2,
+    enemy_skeleton: 3,
+  },
+};
+
+function createTexture(image: ImageAsset): Texture2D {
   const texture = new Texture2D();
   texture.image = image;
+  return texture;
+}
+
+function buildHorizontalFrames(texture: Texture2D, frameCount: number): readonly SpriteFrame[] {
+  const image = texture.image as ImageAsset;
   const frameWidth = Math.floor(image.width / frameCount);
   const frames: SpriteFrame[] = [];
 
@@ -50,9 +74,32 @@ function buildHorizontalFrames(image: ImageAsset, frameCount: number): readonly 
   return frames;
 }
 
+function buildGridRowFrames(
+  texture: Texture2D,
+  cellSize: number,
+  rowIndex: number,
+  frameCount: number,
+): readonly SpriteFrame[] {
+  const frames: SpriteFrame[] = [];
+
+  for (let columnIndex = 0; columnIndex < frameCount; columnIndex += 1) {
+    const frame = new SpriteFrame();
+    frame.texture = texture;
+    frame.rect = new Rect(columnIndex * cellSize, rowIndex * cellSize, cellSize, cellSize);
+    frames.push(frame);
+  }
+
+  return frames;
+}
+
+function getSheetFps(spriteKey: string): number {
+  return spriteKey === "player_witch" ? 6 : 8;
+}
+
 export class CocosSpriteLibrary {
   private readonly frames = new Map<string, SpriteAssetEntry | null>();
   private readonly pending = new Set<string>();
+  private readonly textures = new Map<string, Texture2D>();
 
   public apply(
     node: Node,
@@ -60,6 +107,7 @@ export class CocosSpriteLibrary {
     size: number,
     elapsedSeconds: number,
     fallbackColor: Readonly<Color>,
+    tintColor?: Readonly<Color>,
   ): void {
     const transform = node.getComponent(UITransform) ?? node.addComponent(UITransform);
     transform.setContentSize(size, size);
@@ -69,6 +117,7 @@ export class CocosSpriteLibrary {
 
     if (!spriteKey) {
       sprite.spriteFrame = null;
+      sprite.color = new Color(255, 255, 255, 255);
       drawFallbackCircle(graphics, fallbackColor, size);
       return;
     }
@@ -77,6 +126,7 @@ export class CocosSpriteLibrary {
       const entry = this.frames.get(spriteKey);
       if (!entry) {
         sprite.spriteFrame = null;
+        sprite.color = new Color(255, 255, 255, 255);
         drawFallbackCircle(graphics, fallbackColor, size);
         return;
       }
@@ -85,42 +135,85 @@ export class CocosSpriteLibrary {
         ? 0
         : Math.floor(elapsedSeconds * entry.fps) % entry.frames.length;
       sprite.spriteFrame = entry.frames[frameIndex] ?? entry.frames[0] ?? null;
+      sprite.color = tintColor ? new Color(tintColor) : new Color(255, 255, 255, 255);
       graphics.clear();
       return;
     }
 
     if (!this.pending.has(spriteKey)) {
       this.pending.add(spriteKey);
-      resources.load(`sheets/${spriteKey}_sheet`, ImageAsset, (sheetError, sheetAsset) => {
-        if (!sheetError && sheetAsset) {
-          this.pending.delete(spriteKey);
-          this.frames.set(spriteKey, {
-            frames: buildHorizontalFrames(sheetAsset, 4),
-            fps: spriteKey === "player_witch" ? 6 : 8,
-          });
-          return;
-        }
-
-        resources.load(`sprites/${spriteKey}`, ImageAsset, (error, asset) => {
-          this.pending.delete(spriteKey);
-          if (error || !asset) {
-            this.frames.set(spriteKey, null);
+      const sharedRowIndex = SHARED_CHARACTER_SHEET.rowBySpriteKey[spriteKey];
+      if (sharedRowIndex !== undefined) {
+        resources.load(SHARED_CHARACTER_SHEET.resourceKey, ImageAsset, (sharedError, sharedAsset) => {
+          if (!sharedError && sharedAsset) {
+            const texture = this.getOrCreateTexture(SHARED_CHARACTER_SHEET.resourceKey, sharedAsset);
+            this.pending.delete(spriteKey);
+            this.frames.set(spriteKey, {
+              frames: buildGridRowFrames(
+                texture,
+                SHARED_CHARACTER_SHEET.cellSize,
+                sharedRowIndex,
+                SHARED_CHARACTER_SHEET.frameCount,
+              ),
+              fps: getSheetFps(spriteKey),
+            });
             return;
           }
 
-          const texture = new Texture2D();
-          texture.image = asset;
-          const spriteFrame = new SpriteFrame();
-          spriteFrame.texture = texture;
-          this.frames.set(spriteKey, {
-            frames: [spriteFrame],
-            fps: 1,
-          });
+          this.loadStandaloneSprite(spriteKey);
         });
-      });
+        sprite.spriteFrame = null;
+        sprite.color = new Color(255, 255, 255, 255);
+        drawFallbackCircle(graphics, fallbackColor, size);
+        return;
+      }
+
+      this.loadStandaloneSprite(spriteKey);
     }
 
     sprite.spriteFrame = null;
+    sprite.color = new Color(255, 255, 255, 255);
     drawFallbackCircle(graphics, fallbackColor, size);
+  }
+
+  private loadStandaloneSprite(spriteKey: string): void {
+    resources.load(`sheets/${spriteKey}_sheet`, ImageAsset, (sheetError, sheetAsset) => {
+      if (!sheetError && sheetAsset) {
+        const texture = this.getOrCreateTexture(`sheets/${spriteKey}_sheet`, sheetAsset);
+        this.pending.delete(spriteKey);
+        this.frames.set(spriteKey, {
+          frames: buildHorizontalFrames(texture, 4),
+          fps: getSheetFps(spriteKey),
+        });
+        return;
+      }
+
+      resources.load(`sprites/${spriteKey}`, ImageAsset, (error, asset) => {
+        this.pending.delete(spriteKey);
+        if (error || !asset) {
+          this.frames.set(spriteKey, null);
+          return;
+        }
+
+        const texture = this.getOrCreateTexture(`sprites/${spriteKey}`, asset);
+        const spriteFrame = new SpriteFrame();
+        spriteFrame.texture = texture;
+        this.frames.set(spriteKey, {
+          frames: [spriteFrame],
+          fps: 1,
+        });
+      });
+    });
+  }
+
+  private getOrCreateTexture(cacheKey: string, image: ImageAsset): Texture2D {
+    const cached = this.textures.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const texture = createTexture(image);
+    this.textures.set(cacheKey, texture);
+    return texture;
   }
 }

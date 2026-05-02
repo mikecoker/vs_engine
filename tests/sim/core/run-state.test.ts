@@ -51,4 +51,41 @@ test("reset clears transient world state and queues", () => {
   assert.equal(cleanState.queueSizes.enemySpawn, 0);
   assert.equal(cleanState.queueSizes.xpGrant, 0);
   assert.equal(cleanState.runState, RunState.StartingRun);
+  assert.equal(cleanState.playerInvulnerable, false);
+});
+
+test("debug input can toggle invulnerability and spawn ten enemies", () => {
+  const sim = createSim({}, loadPrototypeContentRegistry());
+  sim.resetRun(42);
+
+  sim.step(1 / 60, {
+    moveX: 0,
+    moveY: 0,
+    pausePressed: false,
+    confirmPressed: false,
+    cancelPressed: false,
+    debugToggleInvulnerablePressed: true,
+  });
+
+  let debugState = sim.getDebugSnapshot();
+  assert.equal(debugState.playerInvulnerable, true);
+
+  sim.step(1 / 60, {
+    moveX: 0,
+    moveY: 0,
+    pausePressed: false,
+    confirmPressed: false,
+    cancelPressed: false,
+    debugSpawnWavePressed: true,
+  });
+
+  debugState = sim.getDebugSnapshot();
+  assert.equal(debugState.activeEnemyCount - 4, 10);
+
+  const snapshot = sim.getRenderSnapshot();
+  const debugSpawnTypeIds = new Set<number>();
+  for (let index = 4; index < snapshot.enemies.activeCount; index += 1) {
+    debugSpawnTypeIds.add(snapshot.enemies.typeIds[index] ?? -1);
+  }
+  assert.equal(debugSpawnTypeIds.size > 1, true);
 });

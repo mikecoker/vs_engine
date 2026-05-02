@@ -61,6 +61,8 @@ export interface WorldCommands {
 
 export interface WorldScratch {
   latestMoveMagnitude: number;
+  nextHealthPickupSpawnAtSeconds: number;
+  nextMagnetPickupSpawnAtSeconds: number;
 }
 
 export interface WorldTimeState {
@@ -160,6 +162,8 @@ export function createWorldCommands(): WorldCommands {
 export function createWorldScratch(): WorldScratch {
   return {
     latestMoveMagnitude: 0,
+    nextHealthPickupSpawnAtSeconds: 12,
+    nextMagnetPickupSpawnAtSeconds: 18,
   };
 }
 

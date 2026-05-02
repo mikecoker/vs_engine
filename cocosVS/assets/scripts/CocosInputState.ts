@@ -8,6 +8,7 @@ export class CocosInputState {
   private cancelPressed = false;
   private debugGrantXpPressed = false;
   private debugSpawnWavePressed = false;
+  private debugToggleInvulnerablePressed = false;
   private pendingUpgradeChoice: number | null = null;
 
   public enable(): void {
@@ -39,6 +40,7 @@ export class CocosInputState {
       cancelPressed: this.cancelPressed,
       debugGrantXpPressed: this.debugGrantXpPressed,
       debugSpawnWavePressed: this.debugSpawnWavePressed,
+      debugToggleInvulnerablePressed: this.debugToggleInvulnerablePressed,
     };
 
     this.pausePressed = false;
@@ -46,6 +48,7 @@ export class CocosInputState {
     this.cancelPressed = false;
     this.debugGrantXpPressed = false;
     this.debugSpawnWavePressed = false;
+    this.debugToggleInvulnerablePressed = false;
     return payload;
   }
 
@@ -68,6 +71,9 @@ export class CocosInputState {
         break;
       case KeyCode.KEY_V:
         this.debugSpawnWavePressed = true;
+        break;
+      case KeyCode.KEY_I:
+        this.debugToggleInvulnerablePressed = true;
         break;
       case KeyCode.DIGIT_1:
         this.pendingUpgradeChoice = 0;

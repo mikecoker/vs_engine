@@ -7,7 +7,7 @@ export const prototypeProjectiles: readonly ProjectileDef[] = [
     displayName: "Magic Bolt",
     spriteKey: "projectile_magic_bolt",
     radius: 6,
-    speed: 340,
+    speed: 520,
     baseDamage: 12,
     lifetimeSeconds: 1.4,
     maxPierce: 0,

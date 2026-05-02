@@ -82,3 +82,16 @@ test("player damage system queues game over when lethal damage resolves", () => 
   assert.equal(damage.count, 1);
   assert.equal(damage.get(0).targetKind, "enemy");
 });
+
+test("debug invulnerable bypasses incoming damage", () => {
+  const content = loadPrototypeContentRegistry();
+  const player = createPlayerStore();
+  initializePlayerForRun(player, content);
+  player.debugInvulnerable = true;
+
+  const result = applyDamageToPlayer(player, 25, "contact");
+
+  assert.equal(result.applied, false);
+  assert.equal(player.hp, player.maxHp);
+  assert.equal(player.isDead, false);
+});

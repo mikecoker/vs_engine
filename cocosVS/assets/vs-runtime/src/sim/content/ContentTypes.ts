@@ -107,7 +107,7 @@ export interface PickupDef extends BaseContentDef<PickupId> {
   readonly spriteKey: string;
   readonly radius: number;
   readonly magnetSpeed: number;
-  readonly grantKind: "xp";
+  readonly grantKind: "xp" | "heal" | "magnet";
   readonly defaultValue: number;
 }
 

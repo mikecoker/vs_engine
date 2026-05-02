@@ -5,6 +5,8 @@ export interface PickupViewModel extends PositionedViewModel {
   typeId: number;
   spriteKey: string;
   displayName: string;
+  grantKind: "xp" | "heal" | "magnet";
+  tintColor?: { r: number; g: number; b: number; a: number };
 }
 
 export class PickupRenderPool {
@@ -16,6 +18,7 @@ export class PickupRenderPool {
     typeId: 0,
     spriteKey: "",
     displayName: "",
+    grantKind: "xp",
   }));
 
   public sync(activeCount: number): void {

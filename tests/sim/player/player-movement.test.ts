@@ -15,6 +15,7 @@ function createMovementContext(
   player: ReturnType<typeof createPlayerStore>,
   moveX: number,
   moveY: number,
+  configOverrides: Partial<FrameContext["config"]> = {},
 ): FrameContext {
   return {
     dt: 1 / 60,
@@ -26,6 +27,7 @@ function createMovementContext(
       maxSubstepsPerFrame: 5,
       maxFrameSeconds: 0.25,
       initialRunState: RunState.Running,
+      bounds: configOverrides.bounds,
       capacities: {
         enemies: 1,
         projectiles: 1,
@@ -64,4 +66,24 @@ test("diagonal movement is normalized to the same speed as axis-aligned movement
   const traveledDistance = Math.hypot(player.posX, player.posY);
   assert.ok(Math.abs(traveledDistance - 160 / 60) < 1e-9);
   assert.ok(Math.abs(Math.hypot(player.velX, player.velY) - 160) < 1e-9);
+});
+
+test("player movement clamps to configured world bounds", () => {
+  const content = loadPrototypeContentRegistry();
+  const player = createPlayerStore();
+  initializePlayerForRun(player, content);
+  player.posX = 899;
+  player.posY = -899;
+
+  const context = createMovementContext(player, 1, -1, {
+    bounds: {
+      player: { minX: -900, maxX: 900, minY: -900, maxY: 900 },
+      spawn: { minX: -1200, maxX: 1200, minY: -1200, maxY: 1200 },
+    },
+  });
+
+  stepPlayerMovement(context);
+
+  assert.equal(player.posX, 900);
+  assert.equal(player.posY, -900);
 });

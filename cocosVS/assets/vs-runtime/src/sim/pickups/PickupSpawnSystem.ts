@@ -22,6 +22,7 @@ export function applyPickupSpawnCommands(context: FrameContext): void {
     store.radius[slot] = command.radius > 0 ? command.radius : pickupDef.radius;
     store.value[slot] = command.value > 0 ? command.value : pickupDef.defaultValue;
     store.magnetized[slot] = 0;
+    store.magnetTimeRemaining[slot] = 0;
     store.magnetSpeed[slot] = pickupDef.magnetSpeed;
   }
 

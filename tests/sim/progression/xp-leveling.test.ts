@@ -79,3 +79,20 @@ test("xp pickups enter the pickup runtime and grant XP on collection", () => {
   assert.equal(world.stores.pickups.activeCount, 0);
   assert.equal(world.commands.pickupSpawn.count, 0);
 });
+
+test("heal pickups restore hp on collection", () => {
+  const { world, context } = createProgressionContext();
+  world.commands.pickupSpawn.enqueue(3, 4, 6, 10, 12);
+
+  applyPickupSpawnCommands(context);
+  world.stores.player.exists = true;
+  world.stores.player.posX = 4;
+  world.stores.player.posY = 6;
+  world.stores.player.hp = 50;
+  world.stores.player.maxHp = 100;
+
+  stepPickupCollectSystem(context);
+
+  assert.equal(world.stores.player.hp, 62);
+  assert.equal(world.stores.pickups.activeCount, 0);
+});

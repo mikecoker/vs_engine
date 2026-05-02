@@ -134,6 +134,7 @@ export class Sim implements SimApi {
       activeEnemyCount: this.world.stores.enemies.activeCount,
       activeProjectileCount: this.world.stores.projectiles.activeCount,
       activePickupCount: this.world.stores.pickups.activeCount,
+      playerInvulnerable: this.world.stores.player.debugInvulnerable,
       queueSizes: {
         enemySpawn: this.world.commands.enemySpawn.count,
         projectileSpawn: this.world.commands.projectileSpawn.count,

@@ -6,6 +6,7 @@ export interface DebugViewModel {
   readonly activeEnemyCount: number;
   readonly activeProjectileCount: number;
   readonly activePickupCount: number;
+  readonly playerInvulnerable: boolean;
   readonly droppedFrameSubsteps: number;
   readonly lastRunStateChangeReason: string;
 }
@@ -17,6 +18,7 @@ export function presentDebug(snapshot: DebugSnapshot): DebugViewModel {
     activeEnemyCount: snapshot.activeEnemyCount,
     activeProjectileCount: snapshot.activeProjectileCount,
     activePickupCount: snapshot.activePickupCount,
+    playerInvulnerable: snapshot.playerInvulnerable,
     droppedFrameSubsteps: snapshot.droppedFrameSubsteps,
     lastRunStateChangeReason: snapshot.lastRunStateChangeReason,
   };

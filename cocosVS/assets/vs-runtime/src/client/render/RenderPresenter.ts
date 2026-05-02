@@ -66,6 +66,12 @@ export class RenderPresenter {
       item.typeId = snapshot.pickups.typeIds[index] ?? 0;
       item.spriteKey = visual?.spriteKey ?? "";
       item.displayName = visual?.displayName ?? "";
+      item.grantKind = visual?.grantKind ?? "xp";
+      item.tintColor = item.grantKind === "heal"
+        ? { r: 255, g: 120, b: 210, a: 255 }
+        : item.grantKind === "magnet"
+          ? { r: 120, g: 190, b: 255, a: 255 }
+          : undefined;
       item.x = snapshot.pickups.posX[index] ?? 0;
       item.y = snapshot.pickups.posY[index] ?? 0;
     }

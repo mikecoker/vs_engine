@@ -14,6 +14,7 @@ export function resetWorld(world: World, seed: number, runState: RunState): void
   if (runState === RunStates.StartingRun || runState === RunStates.Running) {
     initializePlayerForRun(world.stores.player, world.content);
   }
+  world.stores.player.debugInvulnerable = false;
 
   world.stores.enemies.reset();
   world.stores.projectiles.reset();
@@ -38,6 +39,8 @@ export function resetWorld(world: World, seed: number, runState: RunState): void
   world.commands.stateChange.clear();
 
   world.scratch.latestMoveMagnitude = 0;
+  world.scratch.nextHealthPickupSpawnAtSeconds = 12;
+  world.scratch.nextMagnetPickupSpawnAtSeconds = 18;
 
   world.debug.tick = 0;
   world.debug.gameplayTicks = 0;

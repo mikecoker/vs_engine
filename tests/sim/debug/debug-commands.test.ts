@@ -19,6 +19,7 @@ function createWorldHarness() {
       getActiveEnemyCount: () => 0,
       getActiveProjectileCount: () => 0,
       getActivePickupCount: () => 0,
+      getPlayerInvulnerable: () => false,
       getRunState: (): RunState => 'running',
       getTick: () => 0,
       getSeed: () => 123,

@@ -1,4 +1,5 @@
 import type { FrameContext } from "../core/FrameContext.ts";
+import { DEFAULT_SIM_BOUNDS, type SimRectBounds } from "../core/SimConfig.ts";
 import type { PlayerStore } from "./PlayerStore.ts";
 
 export interface NormalizedMovementVector {
@@ -37,6 +38,7 @@ export function stepPlayerMovement(context: FrameContext): void {
   player.velY = direction.y * speed;
   player.posX += player.velX * dt;
   player.posY += player.velY * dt;
+  clampPlayerToBounds(player, context.config.bounds?.player ?? DEFAULT_SIM_BOUNDS.player);
 
   if (direction.magnitude > 0) {
     player.facingX = direction.x;
@@ -46,4 +48,9 @@ export function stepPlayerMovement(context: FrameContext): void {
 
 export function getPlayerMoveSpeed(player: Readonly<PlayerStore>): number {
   return player.statSnapshot.moveSpeed;
+}
+
+function clampPlayerToBounds(player: PlayerStore, bounds: SimRectBounds): void {
+  player.posX = Math.max(bounds.minX, Math.min(bounds.maxX, player.posX));
+  player.posY = Math.max(bounds.minY, Math.min(bounds.maxY, player.posY));
 }

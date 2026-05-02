@@ -34,6 +34,7 @@ test('debug snapshot collects active counts from world hooks', () => {
     getActiveEnemyCount: () => 7,
     getActiveProjectileCount: () => 11,
     getActivePickupCount: () => 2,
+    getPlayerInvulnerable: () => true,
     getRunState: (): RunState => 'paused',
     getTick: () => 42,
     getSeed: () => 99,
@@ -48,6 +49,7 @@ test('debug snapshot collects active counts from world hooks', () => {
   assert.equal(snapshot.runState, 'paused');
   assert.equal(snapshot.tick, 42);
   assert.equal(snapshot.seed, 99);
+  assert.equal(snapshot.playerInvulnerable, true);
   assert.deepEqual(snapshot.counters, {
     activeEnemies: 7,
     activeProjectiles: 11,

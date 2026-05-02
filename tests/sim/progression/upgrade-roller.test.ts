@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { ensureWeaponRuntimeStore } from "../../../src/sim/combat/WeaponRuntimeStore";
 import { loadPrototypeContentRegistry } from "../../../src/sim/content/ContentLoader";
 import { initializePlayerForRun } from "../../../src/sim/player/PlayerReset";
 import { rollUpgradeChoices } from "../../../src/sim/progression/UpgradeRoller";
@@ -23,6 +24,24 @@ test("upgrade roller filters exhausted upgrades", () => {
   for (let index = 0; index < choices.length; index += 1) {
     const choice = choices[index];
     assert.notEqual(choice.kind, "passive");
+  }
+});
+
+test("upgrade roller filters maxed weapon level choices", () => {
+  const content = loadPrototypeContentRegistry();
+  const world = createWorld(mergeSimConfig(), content, RunState.Running, 23);
+  initializePlayerForRun(world.stores.player, content);
+
+  const progression = ensureProgressionStore(world);
+  const magicBoltDef = content.weapons.get("weapon.magic_bolt");
+  const weaponStore = ensureWeaponRuntimeStore(world);
+  weaponStore.weaponLevels[0] = magicBoltDef.maxLevel;
+
+  const choices = rollUpgradeChoices(world, progression);
+
+  for (let index = 0; index < choices.length; index += 1) {
+    const choice = choices[index];
+    assert.notEqual(choice.contentId, "weapon.magic_bolt");
   }
 });
 

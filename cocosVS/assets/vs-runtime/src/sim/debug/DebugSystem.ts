@@ -9,6 +9,7 @@ export interface DebugWorldHooks {
   getActiveEnemyCount(): number;
   getActiveProjectileCount(): number;
   getActivePickupCount(): number;
+  getPlayerInvulnerable(): boolean;
   getRunState(): RunState;
   getTick(): number;
   getSeed(): number;
@@ -60,6 +61,7 @@ export function collectDebugSnapshot(world: DebugWorldHooks): DebugSnapshot {
     runState: world.getRunState(),
     tick: world.getTick(),
     seed: world.getSeed(),
+    playerInvulnerable: world.getPlayerInvulnerable(),
     counters: world.counters,
   });
 }

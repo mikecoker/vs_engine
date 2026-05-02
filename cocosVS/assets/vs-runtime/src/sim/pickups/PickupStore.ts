@@ -8,6 +8,7 @@ export interface PickupStore extends DynamicWorldStore {
   radius: Float32Array;
   value: Uint16Array;
   magnetized: Uint8Array;
+  magnetTimeRemaining: Float32Array;
   magnetSpeed: Float32Array;
   allocate(): number;
   release(slot: number): boolean;
@@ -45,6 +46,7 @@ function resetPickupStore(store: PickupStore): void {
   store.radius.fill(0);
   store.value.fill(0);
   store.magnetized.fill(0);
+  store.magnetTimeRemaining.fill(0);
   store.magnetSpeed.fill(0);
 }
 
@@ -64,6 +66,7 @@ function growPickupStore(store: PickupStore, nextCapacity: number): void {
   store.radius = resizeFloat32(store.radius, nextCapacity);
   store.value = resizeUint16(store.value, nextCapacity);
   store.magnetized = resizeUint8(store.magnetized, nextCapacity);
+  store.magnetTimeRemaining = resizeFloat32(store.magnetTimeRemaining, nextCapacity);
   store.magnetSpeed = resizeFloat32(store.magnetSpeed, nextCapacity);
 }
 
@@ -78,6 +81,7 @@ function copyPickupState(store: PickupStore, sourceSlot: number, targetSlot: num
   store.radius[targetSlot] = store.radius[sourceSlot];
   store.value[targetSlot] = store.value[sourceSlot];
   store.magnetized[targetSlot] = store.magnetized[sourceSlot];
+  store.magnetTimeRemaining[targetSlot] = store.magnetTimeRemaining[sourceSlot];
   store.magnetSpeed[targetSlot] = store.magnetSpeed[sourceSlot];
 }
 
@@ -91,6 +95,7 @@ function clearPickupSlot(store: PickupStore, slot: number): void {
   store.radius[slot] = 0;
   store.value[slot] = 0;
   store.magnetized[slot] = 0;
+  store.magnetTimeRemaining[slot] = 0;
   store.magnetSpeed[slot] = 0;
   const nextGeneration = (store.generation[slot] + 1) & 0xffff;
   store.generation[slot] = nextGeneration === 0 ? 1 : nextGeneration;
@@ -154,6 +159,7 @@ export function createPickupStoreFromPlaceholder(base: DynamicWorldStore): Picku
   store.radius = new Float32Array(base.capacity);
   store.value = new Uint16Array(base.capacity);
   store.magnetized = new Uint8Array(base.capacity);
+  store.magnetTimeRemaining = new Float32Array(base.capacity);
   store.magnetSpeed = new Float32Array(base.capacity);
   store.allocate = () => allocatePickupSlot(store);
   store.release = (slot) => releasePickupSlot(store, slot);

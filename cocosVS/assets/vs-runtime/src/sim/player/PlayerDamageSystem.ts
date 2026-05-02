@@ -26,7 +26,13 @@ export function applyDamageToPlayer(
   amount: number,
   _sourceKind: DamageSourceKind,
 ): PlayerDamageResult {
-  if (!player.exists || player.isDead || amount <= 0 || player.invulnRemaining > 0) {
+  if (
+    !player.exists ||
+    player.isDead ||
+    amount <= 0 ||
+    player.debugInvulnerable ||
+    player.invulnRemaining > 0
+  ) {
     return { applied: false, amountApplied: 0, killedPlayer: false };
   }
 
