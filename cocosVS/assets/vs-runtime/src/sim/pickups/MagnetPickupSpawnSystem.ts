@@ -2,6 +2,7 @@ import { DEFAULT_SIM_BOUNDS } from "../core/SimConfig.ts";
 import type { FrameContext } from "../core/FrameContext.ts";
 import type { PickupDef } from "../content/ContentTypes.ts";
 import type { SimContent } from "../core/SimApi.ts";
+import { ensurePickupStore } from "./PickupStore.ts";
 
 const MAGNET_PICKUP_SPAWN_INTERVAL_SECONDS = 24;
 const MAGNET_PICKUP_SPAWN_CHANCE = 0.38;
@@ -39,8 +40,9 @@ function getMagnetPickupIndex(content: SimContent): number {
 
 function countActiveMagnetPickups(context: FrameContext, magnetPickupIndex: number): number {
   let count = 0;
-  const store = context.world.stores.pickups;
-  for (let slot = 0; slot < store.activeCount; slot += 1) {
+  const store = ensurePickupStore(context.world);
+  for (let denseIndex = 0; denseIndex < store.activeCount; denseIndex += 1) {
+    const slot = store.activeSlots[denseIndex];
     if (store.typeIds[slot] === magnetPickupIndex) {
       count += 1;
     }

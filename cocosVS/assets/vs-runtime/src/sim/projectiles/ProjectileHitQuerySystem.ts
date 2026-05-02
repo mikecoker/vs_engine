@@ -1,6 +1,6 @@
 import type { FrameContext } from "../core/FrameContext.ts";
 import { ensureEnemyStore } from "../enemies/EnemyStore.ts";
-import { ensureSpatialGrid } from "../spatial/SpatialGrid.ts";
+import { cellCoord, createCellKey, ensureSpatialGrid } from "../spatial/SpatialGrid.ts";
 import { circlesOverlap } from "../combat/DamageTypes.ts";
 import { releaseProjectile } from "./ProjectileLifecycle.ts";
 import { ensureProjectileStore } from "./ProjectileStore.ts";
@@ -10,8 +10,9 @@ export function queryProjectileHits(context: FrameContext): void {
   const enemies = ensureEnemyStore(context.world);
   const spatialGrid = ensureSpatialGrid(context.world);
 
-  let projectileSlot = 0;
-  while (projectileSlot < projectiles.activeCount) {
+  let projectileDenseIndex = 0;
+  while (projectileDenseIndex < projectiles.activeCount) {
+    const projectileSlot = projectiles.activeSlots[projectileDenseIndex];
     const projectileX = projectiles.posX[projectileSlot];
     const projectileY = projectiles.posY[projectileSlot];
     const projectileRadius = projectiles.radius[projectileSlot];
@@ -19,32 +20,47 @@ export function queryProjectileHits(context: FrameContext): void {
     let remainingPierce = projectiles.remainingPierce[projectileSlot];
     let shouldDespawn = false;
 
-    spatialGrid.queryNearbySlots(projectileX, projectileY, projectileRadius, (enemySlot) => {
-      if (shouldDespawn || !enemies.isAlive(enemySlot)) {
-        return;
-      }
+    const minCellX = cellCoord(projectileX - projectileRadius, spatialGrid.cellSize);
+    const maxCellX = cellCoord(projectileX + projectileRadius, spatialGrid.cellSize);
+    const minCellY = cellCoord(projectileY - projectileRadius, spatialGrid.cellSize);
+    const maxCellY = cellCoord(projectileY + projectileRadius, spatialGrid.cellSize);
 
-      if (
-        !circlesOverlap(
-          projectileX,
-          projectileY,
-          projectileRadius,
-          enemies.posX[enemySlot],
-          enemies.posY[enemySlot],
-          enemies.radius[enemySlot],
-        )
-      ) {
-        return;
-      }
+    for (let cellYIndex = minCellY; cellYIndex <= maxCellY && !shouldDespawn; cellYIndex += 1) {
+      for (let cellXIndex = minCellX; cellXIndex <= maxCellX && !shouldDespawn; cellXIndex += 1) {
+        const bucket = spatialGrid.buckets.get(createCellKey(cellXIndex, cellYIndex));
+        if (!bucket) {
+          continue;
+        }
 
-      context.world.commands.damage.enqueue("enemy", enemySlot, projectileDamage, "projectile", projectileSlot);
-      if (remainingPierce > 0) {
-        remainingPierce -= 1;
-        return;
-      }
+        for (let bucketIndex = 0; bucketIndex < bucket.length && !shouldDespawn; bucketIndex += 1) {
+          const enemySlot = bucket[bucketIndex];
+          if (!enemies.isAlive(enemySlot)) {
+            continue;
+          }
 
-      shouldDespawn = true;
-    });
+          if (
+            !circlesOverlap(
+              projectileX,
+              projectileY,
+              projectileRadius,
+              enemies.posX[enemySlot],
+              enemies.posY[enemySlot],
+              enemies.radius[enemySlot],
+            )
+          ) {
+            continue;
+          }
+
+          context.world.commands.damage.enqueue("enemy", enemySlot, projectileDamage, "projectile", projectileSlot);
+          if (remainingPierce > 0) {
+            remainingPierce -= 1;
+            continue;
+          }
+
+          shouldDespawn = true;
+        }
+      }
+    }
 
     if (shouldDespawn) {
       releaseProjectile(projectiles, projectileSlot);
@@ -52,7 +68,6 @@ export function queryProjectileHits(context: FrameContext): void {
     }
 
     projectiles.remainingPierce[projectileSlot] = remainingPierce;
-    projectileSlot += 1;
+    projectileDenseIndex += 1;
   }
 }
-

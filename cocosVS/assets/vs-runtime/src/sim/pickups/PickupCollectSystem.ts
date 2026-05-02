@@ -4,7 +4,8 @@ import { PICKUP_MAGNET_DURATION_SECONDS } from "./PickupMagnetSystem.ts";
 
 function magnetizeAllXpPickups(context: FrameContext): void {
   const store = ensurePickupStore(context.world);
-  for (let slot = 0; slot < store.activeCount; slot += 1) {
+  for (let denseIndex = 0; denseIndex < store.activeCount; denseIndex += 1) {
+    const slot = store.activeSlots[denseIndex];
     const pickupDef = getPickupDefByIndex(context.world.content, store.typeIds[slot]);
     if (pickupDef?.grantKind !== "xp") {
       continue;
@@ -23,13 +24,14 @@ export function stepPickupCollectSystem(context: FrameContext): void {
   }
 
   const store = ensurePickupStore(world);
-  let slot = 0;
-  while (slot < store.activeCount) {
+  let denseIndex = 0;
+  while (denseIndex < store.activeCount) {
+    const slot = store.activeSlots[denseIndex];
     const dx = player.posX - store.posX[slot];
     const dy = player.posY - store.posY[slot];
     const radius = player.radius + store.radius[slot];
     if (dx * dx + dy * dy > radius * radius) {
-      slot += 1;
+      denseIndex += 1;
       continue;
     }
 
@@ -39,7 +41,7 @@ export function stepPickupCollectSystem(context: FrameContext): void {
       world.commands.xpGrant.enqueue(value);
     } else if (value > 0 && pickupDef?.grantKind === "heal") {
       if (player.hp >= player.maxHp) {
-        slot += 1;
+        denseIndex += 1;
         continue;
       }
 

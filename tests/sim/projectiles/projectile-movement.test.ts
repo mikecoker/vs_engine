@@ -6,10 +6,11 @@ import type { FrameContext } from "../../../src/sim/core/FrameContext";
 import { RunState } from "../../../src/sim/core/RunState";
 import { mergeSimConfig } from "../../../src/sim/core/SimConfig";
 import { stepProjectileMovement } from "../../../src/sim/projectiles/ProjectileMovementSystem";
+import { spawnProjectilesFromCommands } from "../../../src/sim/projectiles/ProjectileSpawnSystem";
 import { ensureProjectileStore } from "../../../src/sim/projectiles/ProjectileStore";
 import { createWorld } from "../../../src/sim/world/World";
 
-test("projectiles spawn from commands and advance by velocity", () => {
+test("projectiles advance by velocity after spawn commands are applied", () => {
   const world = createWorld(mergeSimConfig(), loadPrototypeContentRegistry(), RunState.Running, 29);
   world.commands.projectileSpawn.enqueueValues(0, 1, 5, 10, 60, -30, 6, 12, 2, 0, 1);
 
@@ -28,6 +29,7 @@ test("projectiles spawn from commands and advance by velocity", () => {
     world,
   } as FrameContext;
 
+  spawnProjectilesFromCommands(context);
   stepProjectileMovement(context);
 
   const store = ensureProjectileStore(world);
@@ -36,4 +38,3 @@ test("projectiles spawn from commands and advance by velocity", () => {
   assert.equal(store.posY[0], -5);
   assert.equal(store.remainingLife[0], 1.5);
 });
-

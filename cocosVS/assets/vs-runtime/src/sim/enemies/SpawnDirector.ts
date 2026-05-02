@@ -5,7 +5,7 @@ import {
   getEnemyRuntimeContent,
   type EnemyWaveRuntimeDef,
 } from "./EnemyArchetypeRuntime.ts";
-import { ensureEnemyStore, forEachActiveEnemySlot } from "./EnemyStore.ts";
+import { ensureEnemyStore } from "./EnemyStore.ts";
 
 export const DEFAULT_SPAWN_SAFE_RADIUS = 340;
 export const DEFAULT_SPAWN_RING_THICKNESS = 180;
@@ -87,12 +87,13 @@ export function countActiveEnemiesByArchetype(world: World, requiredSize: number
   const counts = ensureActiveCountBuffer(director, requiredSize);
   const store = ensureEnemyStore(world);
 
-  forEachActiveEnemySlot(store, (slot) => {
+  for (let denseIndex = 0; denseIndex < store.activeCount; denseIndex += 1) {
+    const slot = store.activeSlots[denseIndex];
     const archetypeIndex = store.typeIds[slot];
     if (archetypeIndex < counts.length) {
       counts[archetypeIndex] += 1;
     }
-  });
+  }
 
   return counts;
 }

@@ -249,12 +249,3 @@ export function syncEnemyRenderViews(store: EnemyStore): void {
     store.renderPosY[denseIndex] = store.posY[slot];
   }
 }
-
-export function forEachActiveEnemySlot(
-  store: EnemyStore,
-  visit: (slot: number, denseIndex: number) => void,
-): void {
-  for (let denseIndex = 0; denseIndex < store.activeCount; denseIndex += 1) {
-    visit(store.activeSlots[denseIndex], denseIndex);
-  }
-}

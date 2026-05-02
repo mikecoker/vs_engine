@@ -1,5 +1,5 @@
 import type { World } from "../world/World.ts";
-import { ensureEnemyStore, forEachActiveEnemySlot } from "../enemies/EnemyStore.ts";
+import { ensureEnemyStore } from "../enemies/EnemyStore.ts";
 
 export interface SpatialGrid {
   readonly cellSize: number;
@@ -19,7 +19,7 @@ declare module "../world/World" {
 
 const DEFAULT_GRID_CELL_SIZE = 64;
 
-function cellCoord(value: number, cellSize: number): number {
+export function cellCoord(value: number, cellSize: number): number {
   return Math.floor(value / cellSize);
 }
 
@@ -47,7 +47,8 @@ export function createSpatialGrid(cellSize = DEFAULT_GRID_CELL_SIZE): SpatialGri
     rebuildEnemyOccupancy(world: World) {
       this.reset();
       const store = ensureEnemyStore(world);
-      forEachActiveEnemySlot(store, (slot) => {
+      for (let denseIndex = 0; denseIndex < store.activeCount; denseIndex += 1) {
+        const slot = store.activeSlots[denseIndex];
         const key = createCellKey(
           cellCoord(store.posX[slot], this.cellSize),
           cellCoord(store.posY[slot], this.cellSize),
@@ -62,7 +63,7 @@ export function createSpatialGrid(cellSize = DEFAULT_GRID_CELL_SIZE): SpatialGri
           this.activeKeys.push(key);
         }
         bucket.push(slot);
-      });
+      }
     },
     queryNearbySlots(x: number, y: number, radius: number, visit: (slot: number) => void) {
       const minCellX = cellCoord(x - radius, this.cellSize);

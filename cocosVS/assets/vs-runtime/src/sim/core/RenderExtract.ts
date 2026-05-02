@@ -1,12 +1,18 @@
 import type { RenderSnapshot } from "./RenderSnapshot.ts";
 import type { World } from "../world/World.ts";
 import { ensureEnemyStore, syncEnemyRenderViews } from "../enemies/EnemyStore.ts";
+import { ensurePickupStore, syncPickupRenderViews } from "../pickups/PickupStore.ts";
+import { ensureProjectileStore, syncProjectileRenderViews } from "../projectiles/ProjectileStore.ts";
 import { ensureWeaponRuntimeStore } from "../combat/WeaponRuntimeStore.ts";
 
 export function extractRenderSnapshot(world: World): RenderSnapshot {
   const enemies = ensureEnemyStore(world);
+  const projectiles = ensureProjectileStore(world);
+  const pickups = ensurePickupStore(world);
   const weapons = ensureWeaponRuntimeStore(world);
   syncEnemyRenderViews(enemies);
+  syncProjectileRenderViews(projectiles);
+  syncPickupRenderViews(pickups);
 
   return {
     runState: world.runState.current,
@@ -26,16 +32,16 @@ export function extractRenderSnapshot(world: World): RenderSnapshot {
       posY: enemies.renderPosY,
     },
     projectiles: {
-      activeCount: world.stores.projectiles.activeCount,
-      typeIds: world.stores.projectiles.typeIds,
-      posX: world.stores.projectiles.posX,
-      posY: world.stores.projectiles.posY,
+      activeCount: projectiles.activeCount,
+      typeIds: projectiles.renderTypeIds,
+      posX: projectiles.renderPosX,
+      posY: projectiles.renderPosY,
     },
     pickups: {
-      activeCount: world.stores.pickups.activeCount,
-      typeIds: world.stores.pickups.typeIds,
-      posX: world.stores.pickups.posX,
-      posY: world.stores.pickups.posY,
+      activeCount: pickups.activeCount,
+      typeIds: pickups.renderTypeIds,
+      posX: pickups.renderPosX,
+      posY: pickups.renderPosY,
     },
     progression: {
       level: world.stores.progression.level,

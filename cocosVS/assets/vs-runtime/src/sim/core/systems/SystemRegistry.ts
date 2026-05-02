@@ -7,6 +7,7 @@ import { applyEnemySpawnCommands } from "../../enemies/EnemySpawnSystem.ts";
 import { stepSpawnDirectorSystem } from "../../enemies/SpawnDirectorSystem.ts";
 import { queryProjectileHits } from "../../projectiles/ProjectileHitQuerySystem.ts";
 import { stepProjectileMovement } from "../../projectiles/ProjectileMovementSystem.ts";
+import { spawnProjectilesFromCommands } from "../../projectiles/ProjectileSpawnSystem.ts";
 import { applyPickupSpawnCommands } from "../../pickups/PickupSpawnSystem.ts";
 import { stepHealthPickupSpawner } from "../../pickups/HealthPickupSpawnSystem.ts";
 import { stepMagnetPickupSpawner } from "../../pickups/MagnetPickupSpawnSystem.ts";
@@ -37,8 +38,10 @@ const GAMEPLAY_EXECUTORS: Readonly<Record<string, (context: FrameContext) => voi
   SpawnDirectorSystem: stepSpawnDirectorSystem,
   ApplySpawnCommandsSystem: applyEnemySpawnCommands,
   PlayerMovementSystem: stepPlayerMovement,
+  PreMovementSpatialGridBuildSystem: rebuildSpatialGrid,
   EnemyMovementSystem: stepEnemyMovement,
   WeaponFireSystem: stepWeaponFire,
+  ApplyProjectileSpawnCommandsSystem: spawnProjectilesFromCommands,
   ProjectileMovementSystem: stepProjectileMovement,
   SpatialGridBuildSystem: rebuildSpatialGrid,
   ContactDamageQuerySystem: queryContactDamage,

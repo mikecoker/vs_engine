@@ -1,6 +1,6 @@
 import type { ProjectileDef } from "../content/ContentTypes.ts";
 import type { FrameContext } from "../core/FrameContext.ts";
-import { ensureEnemyStore, forEachActiveEnemySlot } from "../enemies/EnemyStore.ts";
+import { ensureEnemyStore } from "../enemies/EnemyStore.ts";
 import { getWeaponDefByIndex } from "./WeaponRuntimeContent.ts";
 import { PLAYER_TEAM } from "./DamageTypes.ts";
 import { ensureWeaponRuntimeStore } from "./WeaponRuntimeStore.ts";
@@ -137,12 +137,13 @@ function applyAreaDamage(
   const enemies = ensureEnemyStore(context.world);
   let hitAny = false;
 
-  forEachActiveEnemySlot(enemies, (slot) => {
+  for (let denseIndex = 0; denseIndex < enemies.activeCount; denseIndex += 1) {
+    const slot = enemies.activeSlots[denseIndex];
     const dx = enemies.posX[slot] - centerX;
     const dy = enemies.posY[slot] - centerY;
     const hitRadius = radius + enemies.radius[slot];
     if (dx * dx + dy * dy > hitRadius * hitRadius) {
-      return;
+      continue;
     }
 
     context.world.commands.damage.enqueue(
@@ -153,7 +154,7 @@ function applyAreaDamage(
       sourceId,
     );
     hitAny = true;
-  });
+  }
 
   return hitAny;
 }

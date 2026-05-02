@@ -13,10 +13,8 @@ export function stepPickupMagnetSystem(context: FrameContext): void {
   const store = ensurePickupStore(world);
   const magnetRadius = Math.max(0, player.pickupRadius);
 
-  for (let slot = 0; slot < store.activeCount; slot += 1) {
-    if (!store.isAlive(slot)) {
-      continue;
-    }
+  for (let denseIndex = 0; denseIndex < store.activeCount; denseIndex += 1) {
+    const slot = store.activeSlots[denseIndex];
 
     const dx = player.posX - store.posX[slot];
     const dy = player.posY - store.posY[slot];

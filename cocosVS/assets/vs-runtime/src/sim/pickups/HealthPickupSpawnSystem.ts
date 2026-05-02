@@ -2,6 +2,7 @@ import { DEFAULT_SIM_BOUNDS } from "../core/SimConfig.ts";
 import type { FrameContext } from "../core/FrameContext.ts";
 import type { PickupDef } from "../content/ContentTypes.ts";
 import type { SimContent } from "../core/SimApi.ts";
+import { ensurePickupStore } from "./PickupStore.ts";
 
 const HEALTH_PICKUP_SPAWN_INTERVAL_SECONDS = 18;
 const MAX_ACTIVE_HEALTH_PICKUPS = 2;
@@ -38,8 +39,9 @@ function getHealPickupIndex(content: SimContent): number {
 
 function countActiveHealPickups(context: FrameContext, healPickupIndex: number): number {
   let count = 0;
-  const store = context.world.stores.pickups;
-  for (let slot = 0; slot < store.activeCount; slot += 1) {
+  const store = ensurePickupStore(context.world);
+  for (let denseIndex = 0; denseIndex < store.activeCount; denseIndex += 1) {
+    const slot = store.activeSlots[denseIndex];
     if (store.typeIds[slot] === healPickupIndex) {
       count += 1;
     }

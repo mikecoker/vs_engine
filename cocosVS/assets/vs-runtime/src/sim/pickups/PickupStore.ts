@@ -10,11 +10,35 @@ export interface PickupStore extends DynamicWorldStore {
   magnetized: Uint8Array;
   magnetTimeRemaining: Float32Array;
   magnetSpeed: Float32Array;
+  activeSlots: Uint32Array;
+  activeSlotIndex: Int32Array;
+  freeList: Uint32Array;
+  freeCount: number;
+  nextUnusedIndex: number;
+  renderTypeIds: Uint16Array;
+  renderPosX: Float32Array;
+  renderPosY: Float32Array;
   allocate(): number;
   release(slot: number): boolean;
   isAlive(slot: number): boolean;
   validate(slot: number, generation: number): boolean;
   grow(nextCapacity: number): void;
+}
+
+const ACTIVE_SLOT_EMPTY = -1;
+
+function createFreeList(capacity: number): Uint32Array {
+  const values = new Uint32Array(capacity);
+  for (let index = 0; index < capacity; index += 1) {
+    values[index] = capacity - 1 - index;
+  }
+  return values;
+}
+
+function createInt32Filled(capacity: number, value: number): Int32Array {
+  const values = new Int32Array(capacity);
+  values.fill(value);
+  return values;
 }
 
 function resizeUint8(source: Uint8Array, nextCapacity: number): Uint8Array {
@@ -35,9 +59,23 @@ function resizeFloat32(source: Float32Array, nextCapacity: number): Float32Array
   return next;
 }
 
+function resizeUint32(source: Uint32Array, nextCapacity: number): Uint32Array {
+  const next = new Uint32Array(nextCapacity);
+  next.set(source.subarray(0, Math.min(source.length, nextCapacity)));
+  return next;
+}
+
+function resizeInt32(source: Int32Array, nextCapacity: number, fillValue: number): Int32Array {
+  const next = new Int32Array(nextCapacity);
+  next.fill(fillValue);
+  next.set(source.subarray(0, Math.min(source.length, nextCapacity)));
+  return next;
+}
+
 function resetPickupStore(store: PickupStore): void {
   store.activeCount = 0;
   store.activeMask.fill(0);
+  store.generation.fill(0);
   store.typeIds.fill(0);
   store.posX.fill(0);
   store.posY.fill(0);
@@ -48,6 +86,14 @@ function resetPickupStore(store: PickupStore): void {
   store.magnetized.fill(0);
   store.magnetTimeRemaining.fill(0);
   store.magnetSpeed.fill(0);
+  store.activeSlots.fill(0);
+  store.activeSlotIndex.fill(ACTIVE_SLOT_EMPTY);
+  store.freeList = createFreeList(store.capacity);
+  store.freeCount = store.capacity;
+  store.nextUnusedIndex = 0;
+  store.renderTypeIds.fill(0);
+  store.renderPosX.fill(0);
+  store.renderPosY.fill(0);
 }
 
 function growPickupStore(store: PickupStore, nextCapacity: number): void {
@@ -55,6 +101,7 @@ function growPickupStore(store: PickupStore, nextCapacity: number): void {
     return;
   }
 
+  const previousCapacity = store.capacity;
   store.capacity = nextCapacity;
   store.activeMask = resizeUint8(store.activeMask, nextCapacity);
   store.generation = resizeUint16(store.generation, nextCapacity);
@@ -68,21 +115,19 @@ function growPickupStore(store: PickupStore, nextCapacity: number): void {
   store.magnetized = resizeUint8(store.magnetized, nextCapacity);
   store.magnetTimeRemaining = resizeFloat32(store.magnetTimeRemaining, nextCapacity);
   store.magnetSpeed = resizeFloat32(store.magnetSpeed, nextCapacity);
-}
+  store.activeSlots = resizeUint32(store.activeSlots, nextCapacity);
+  store.activeSlotIndex = resizeInt32(store.activeSlotIndex, nextCapacity, ACTIVE_SLOT_EMPTY);
+  store.renderTypeIds = resizeUint16(store.renderTypeIds, nextCapacity);
+  store.renderPosX = resizeFloat32(store.renderPosX, nextCapacity);
+  store.renderPosY = resizeFloat32(store.renderPosY, nextCapacity);
 
-function copyPickupState(store: PickupStore, sourceSlot: number, targetSlot: number): void {
-  store.generation[targetSlot] = store.generation[sourceSlot];
-  store.activeMask[targetSlot] = 1;
-  store.typeIds[targetSlot] = store.typeIds[sourceSlot];
-  store.posX[targetSlot] = store.posX[sourceSlot];
-  store.posY[targetSlot] = store.posY[sourceSlot];
-  store.velX[targetSlot] = store.velX[sourceSlot];
-  store.velY[targetSlot] = store.velY[sourceSlot];
-  store.radius[targetSlot] = store.radius[sourceSlot];
-  store.value[targetSlot] = store.value[sourceSlot];
-  store.magnetized[targetSlot] = store.magnetized[sourceSlot];
-  store.magnetTimeRemaining[targetSlot] = store.magnetTimeRemaining[sourceSlot];
-  store.magnetSpeed[targetSlot] = store.magnetSpeed[sourceSlot];
+  const nextFreeList = new Uint32Array(nextCapacity);
+  nextFreeList.set(store.freeList.subarray(0, store.freeCount));
+  for (let index = nextCapacity - 1; index >= previousCapacity; index -= 1) {
+    nextFreeList[store.freeCount] = index;
+    store.freeCount += 1;
+  }
+  store.freeList = nextFreeList;
 }
 
 function clearPickupSlot(store: PickupStore, slot: number): void {
@@ -102,15 +147,22 @@ function clearPickupSlot(store: PickupStore, slot: number): void {
 }
 
 function allocatePickupSlot(store: PickupStore): number {
-  if (store.activeCount >= store.capacity) {
+  if (store.freeCount === 0) {
     store.grow(Math.max(1, store.capacity * 2));
   }
 
-  const slot = store.activeCount;
-  store.activeCount += 1;
+  store.freeCount -= 1;
+  const slot = store.freeList[store.freeCount];
+
   store.activeMask[slot] = 1;
   if (store.generation[slot] === 0) {
     store.generation[slot] = 1;
+  }
+  store.activeSlotIndex[slot] = store.activeCount;
+  store.activeSlots[store.activeCount] = slot;
+  store.activeCount += 1;
+  if (slot >= store.nextUnusedIndex) {
+    store.nextUnusedIndex = slot + 1;
   }
   return slot;
 }
@@ -120,13 +172,21 @@ function releasePickupSlot(store: PickupStore, slot: number): boolean {
     return false;
   }
 
-  const lastSlot = store.activeCount - 1;
-  if (slot !== lastSlot) {
-    copyPickupState(store, lastSlot, slot);
-  }
+  const denseIndex = store.activeSlotIndex[slot];
+  const lastDenseIndex = store.activeCount - 1;
+  const movedSlot = store.activeSlots[lastDenseIndex];
 
-  clearPickupSlot(store, lastSlot);
-  store.activeCount = lastSlot;
+  store.activeCount = lastDenseIndex;
+  store.activeSlotIndex[slot] = ACTIVE_SLOT_EMPTY;
+  if (denseIndex !== lastDenseIndex) {
+    store.activeSlots[denseIndex] = movedSlot;
+    store.activeSlotIndex[movedSlot] = denseIndex;
+  }
+  store.activeSlots[lastDenseIndex] = 0;
+
+  clearPickupSlot(store, slot);
+  store.freeList[store.freeCount] = slot;
+  store.freeCount += 1;
   return true;
 }
 
@@ -161,12 +221,20 @@ export function createPickupStoreFromPlaceholder(base: DynamicWorldStore): Picku
   store.magnetized = new Uint8Array(base.capacity);
   store.magnetTimeRemaining = new Float32Array(base.capacity);
   store.magnetSpeed = new Float32Array(base.capacity);
+  store.activeSlots = new Uint32Array(base.capacity);
+  store.activeSlotIndex = createInt32Filled(base.capacity, ACTIVE_SLOT_EMPTY);
+  store.freeList = createFreeList(base.capacity);
+  store.freeCount = base.capacity;
+  store.nextUnusedIndex = 0;
+  store.renderTypeIds = new Uint16Array(base.capacity);
+  store.renderPosX = new Float32Array(base.capacity);
+  store.renderPosY = new Float32Array(base.capacity);
   store.allocate = () => allocatePickupSlot(store);
   store.release = (slot) => releasePickupSlot(store, slot);
-  store.isAlive = (slot) => slot >= 0 && slot < store.activeCount && store.activeMask[slot] === 1;
+  store.isAlive = (slot) => slot >= 0 && slot < store.capacity && store.activeMask[slot] === 1;
   store.validate = (slot, generation) =>
     slot >= 0 &&
-    slot < store.activeCount &&
+    slot < store.capacity &&
     store.activeMask[slot] === 1 &&
     store.generation[slot] === generation;
   store.grow = (nextCapacity) => growPickupStore(store, nextCapacity);
@@ -178,4 +246,13 @@ export function createPickupStoreFromPlaceholder(base: DynamicWorldStore): Picku
 
 export function ensurePickupStore(world: World): PickupStore {
   return createPickupStoreFromPlaceholder(world.stores.pickups);
+}
+
+export function syncPickupRenderViews(store: PickupStore): void {
+  for (let denseIndex = 0; denseIndex < store.activeCount; denseIndex += 1) {
+    const slot = store.activeSlots[denseIndex];
+    store.renderTypeIds[denseIndex] = store.typeIds[slot];
+    store.renderPosX[denseIndex] = store.posX[slot];
+    store.renderPosY[denseIndex] = store.posY[slot];
+  }
 }

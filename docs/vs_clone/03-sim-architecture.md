@@ -71,19 +71,21 @@ Every tick should execute in this order:
 3. `SpawnDirectorSystem`
 4. `ApplySpawnCommandsSystem`
 5. `PlayerMovementSystem`
-6. `EnemyMovementSystem`
-7. `WeaponFireSystem`
-8. `ProjectileMovementSystem`
-9. `SpatialGridBuildSystem`
-10. `ContactDamageQuerySystem`
-11. `ProjectileHitQuerySystem`
-12. `DamageResolveSystem`
-13. `DeathAndDropSystem`
-14. `PickupMagnetSystem`
-15. `PickupCollectSystem`
-16. `ProgressionSystem`
-17. `CleanupSystem`
-18. `RenderExtractSystem`
+6. `PreMovementSpatialGridBuildSystem`
+7. `EnemyMovementSystem`
+8. `WeaponFireSystem`
+9. `ApplyProjectileSpawnCommandsSystem`
+10. `ProjectileMovementSystem`
+11. `SpatialGridBuildSystem`
+12. `ContactDamageQuerySystem`
+13. `ProjectileHitQuerySystem`
+14. `DamageResolveSystem`
+15. `DeathAndDropSystem`
+16. `PickupMagnetSystem`
+17. `PickupCollectSystem`
+18. `ProgressionSystem`
+19. `CleanupSystem`
+20. `RenderExtractSystem`
 
 Workers may add later systems, but should preserve the discipline:
 - movement before collision queries
