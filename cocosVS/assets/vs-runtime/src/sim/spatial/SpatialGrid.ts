@@ -8,7 +8,6 @@ export interface SpatialGrid {
   readonly scratchResults: number[];
   reset(): void;
   rebuildEnemyOccupancy(world: World): void;
-  queryNearbySlots(x: number, y: number, radius: number, visit: (slot: number) => void): void;
 }
 
 declare module "../world/World" {
@@ -63,25 +62,6 @@ export function createSpatialGrid(cellSize = DEFAULT_GRID_CELL_SIZE): SpatialGri
           this.activeKeys.push(key);
         }
         bucket.push(slot);
-      }
-    },
-    queryNearbySlots(x: number, y: number, radius: number, visit: (slot: number) => void) {
-      const minCellX = cellCoord(x - radius, this.cellSize);
-      const maxCellX = cellCoord(x + radius, this.cellSize);
-      const minCellY = cellCoord(y - radius, this.cellSize);
-      const maxCellY = cellCoord(y + radius, this.cellSize);
-
-      for (let cellYIndex = minCellY; cellYIndex <= maxCellY; cellYIndex += 1) {
-        for (let cellXIndex = minCellX; cellXIndex <= maxCellX; cellXIndex += 1) {
-          const bucket = this.buckets.get(createCellKey(cellXIndex, cellYIndex));
-          if (!bucket) {
-            continue;
-          }
-
-          for (let index = 0; index < bucket.length; index += 1) {
-            visit(bucket[index]);
-          }
-        }
       }
     },
   };

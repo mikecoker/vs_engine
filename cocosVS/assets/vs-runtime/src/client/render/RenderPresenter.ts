@@ -2,7 +2,12 @@ import type { SimContent } from "../../sim/core/SimApi.ts";
 import type { RenderSnapshot } from "../../sim/core/RenderSnapshot.ts";
 import { createClientContentCatalog } from "../content/ClientContentCatalog.ts";
 import { EnemyRenderPool, type EnemyViewModel } from "./EnemyRenderPool.ts";
-import { PickupRenderPool, type PickupViewModel } from "./PickupRenderPool.ts";
+import {
+  HEAL_PICKUP_TINT,
+  MAGNET_PICKUP_TINT,
+  PickupRenderPool,
+  type PickupViewModel,
+} from "./PickupRenderPool.ts";
 import { presentPlayer, type PlayerViewModel } from "./PlayerPresenter.ts";
 import { ProjectileRenderPool, type ProjectileViewModel } from "./ProjectileRenderPool.ts";
 import { presentWeaponEffects, type WeaponEffectViewModel } from "./WeaponEffectPresenter.ts";
@@ -94,9 +99,9 @@ export class RenderPresenter {
       item.grantKind = visual?.grantKind ?? "xp";
       item.visualScale = getPickupVisualScale(item.spriteKey);
       item.tintColor = item.grantKind === "heal"
-        ? { r: 255, g: 120, b: 210, a: 255 }
+        ? HEAL_PICKUP_TINT
         : item.grantKind === "magnet"
-          ? { r: 120, g: 190, b: 255, a: 255 }
+          ? MAGNET_PICKUP_TINT
           : undefined;
       item.x = snapshot.pickups.posX[index] ?? 0;
       item.y = snapshot.pickups.posY[index] ?? 0;

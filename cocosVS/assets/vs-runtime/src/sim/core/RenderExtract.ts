@@ -3,7 +3,7 @@ import type { World } from "../world/World.ts";
 import { ensureEnemyStore, syncEnemyRenderViews } from "../enemies/EnemyStore.ts";
 import { ensurePickupStore, syncPickupRenderViews } from "../pickups/PickupStore.ts";
 import { ensureProjectileStore, syncProjectileRenderViews } from "../projectiles/ProjectileStore.ts";
-import { ensureWeaponRuntimeStore } from "../combat/WeaponRuntimeStore.ts";
+import { ensureWeaponRuntimeStore, syncWeaponRenderViews } from "../combat/WeaponRuntimeStore.ts";
 
 export function extractRenderSnapshot(world: World): RenderSnapshot {
   const enemies = ensureEnemyStore(world);
@@ -13,6 +13,7 @@ export function extractRenderSnapshot(world: World): RenderSnapshot {
   syncEnemyRenderViews(enemies);
   syncProjectileRenderViews(projectiles);
   syncPickupRenderViews(pickups);
+  syncWeaponRenderViews(weapons);
 
   return {
     runState: world.runState.current,
@@ -51,10 +52,10 @@ export function extractRenderSnapshot(world: World): RenderSnapshot {
     },
     weapons: {
       activeCount: weapons.activeCount,
-      typeIds: weapons.weaponTypeIds,
-      levels: weapons.weaponLevels,
-      cooldownRemaining: weapons.cooldownRemaining,
-      lastFireElapsedSeconds: weapons.lastFireElapsedSeconds,
+      typeIds: weapons.renderTypeIds,
+      levels: weapons.renderLevels,
+      cooldownRemaining: weapons.renderCooldownRemaining,
+      lastFireElapsedSeconds: weapons.renderLastFireElapsedSeconds,
     },
   };
 }

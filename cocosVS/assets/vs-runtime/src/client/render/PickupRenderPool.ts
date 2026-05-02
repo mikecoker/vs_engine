@@ -10,6 +10,9 @@ export interface PickupViewModel extends PositionedViewModel {
   visualScale: number;
 }
 
+export const HEAL_PICKUP_TINT = { r: 255, g: 120, b: 210, a: 255 } as const;
+export const MAGNET_PICKUP_TINT = { r: 120, g: 190, b: 255, a: 255 } as const;
+
 export class PickupRenderPool {
   private readonly pool = new RenderPool<PickupViewModel>(() => ({
     key: "",

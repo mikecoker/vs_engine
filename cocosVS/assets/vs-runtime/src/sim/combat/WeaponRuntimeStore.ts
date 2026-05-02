@@ -11,6 +11,10 @@ export interface WeaponRuntimeStore {
   weaponLevels: Uint8Array;
   cooldownRemaining: Float32Array;
   lastFireElapsedSeconds: Float32Array;
+  renderTypeIds: Uint16Array;
+  renderLevels: Uint8Array;
+  renderCooldownRemaining: Float32Array;
+  renderLastFireElapsedSeconds: Float32Array;
   reset(): void;
   ensureCapacity(nextCapacity: number): void;
 }
@@ -42,6 +46,10 @@ function createWeaponRuntimeStore(initialCapacity = 4): WeaponRuntimeStore {
     weaponLevels: new Uint8Array(initialCapacity),
     cooldownRemaining: new Float32Array(initialCapacity),
     lastFireElapsedSeconds: new Float32Array(initialCapacity),
+    renderTypeIds: new Uint16Array(initialCapacity),
+    renderLevels: new Uint8Array(initialCapacity),
+    renderCooldownRemaining: new Float32Array(initialCapacity),
+    renderLastFireElapsedSeconds: new Float32Array(initialCapacity),
     reset() {
       this.activeCount = 0;
       this.ownerCharacterId = null;
@@ -49,6 +57,10 @@ function createWeaponRuntimeStore(initialCapacity = 4): WeaponRuntimeStore {
       this.weaponLevels.fill(0);
       this.cooldownRemaining.fill(0);
       this.lastFireElapsedSeconds.fill(-1);
+      this.renderTypeIds.fill(0);
+      this.renderLevels.fill(0);
+      this.renderCooldownRemaining.fill(0);
+      this.renderLastFireElapsedSeconds.fill(-1);
     },
     ensureCapacity(nextCapacity: number) {
       if (nextCapacity <= this.capacity) {
@@ -71,6 +83,24 @@ function createWeaponRuntimeStore(initialCapacity = 4): WeaponRuntimeStore {
       nextLastFire.fill(-1);
       nextLastFire.set(this.lastFireElapsedSeconds.subarray(0, this.activeCount));
       this.lastFireElapsedSeconds = nextLastFire;
+
+      const nextRenderWeaponIds = new Uint16Array(nextCapacity);
+      nextRenderWeaponIds.set(this.renderTypeIds.subarray(0, this.activeCount));
+      this.renderTypeIds = nextRenderWeaponIds;
+
+      const nextRenderLevels = new Uint8Array(nextCapacity);
+      nextRenderLevels.set(this.renderLevels.subarray(0, this.activeCount));
+      this.renderLevels = nextRenderLevels;
+
+      const nextRenderCooldowns = new Float32Array(nextCapacity);
+      nextRenderCooldowns.set(this.renderCooldownRemaining.subarray(0, this.activeCount));
+      this.renderCooldownRemaining = nextRenderCooldowns;
+
+      const nextRenderLastFire = new Float32Array(nextCapacity);
+      nextRenderLastFire.fill(-1);
+      nextRenderLastFire.set(this.renderLastFireElapsedSeconds.subarray(0, this.activeCount));
+      this.renderLastFireElapsedSeconds = nextRenderLastFire;
+
       this.capacity = nextCapacity;
     },
   };
@@ -113,4 +143,13 @@ export function ensureWeaponRuntimeStore(world: World): WeaponRuntimeStore {
   }
 
   return store;
+}
+
+export function syncWeaponRenderViews(store: WeaponRuntimeStore): void {
+  for (let index = 0; index < store.activeCount; index += 1) {
+    store.renderTypeIds[index] = store.weaponTypeIds[index];
+    store.renderLevels[index] = store.weaponLevels[index];
+    store.renderCooldownRemaining[index] = store.cooldownRemaining[index];
+    store.renderLastFireElapsedSeconds[index] = store.lastFireElapsedSeconds[index];
+  }
 }

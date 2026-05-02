@@ -17,6 +17,7 @@ function ensureEntityNode(size: number): Node {
 
 export class CocosEntityPool<T extends SimpleEntityFrame> {
   private readonly nodes: Node[] = [];
+  private readonly tintColor = new Color();
 
   public constructor(
     private readonly parent: Node,
@@ -47,20 +48,17 @@ export class CocosEntityPool<T extends SimpleEntityFrame> {
       }
 
       node.active = true;
+      const itemTint = (item as T & { tintColor?: { r: number; g: number; b: number; a: number } }).tintColor;
+      const tintColor = itemTint
+        ? this.tintColor.set(itemTint.r, itemTint.g, itemTint.b, itemTint.a)
+        : undefined;
       this.sprites.apply(
         node,
         (item as T & { spriteKey?: string }).spriteKey ?? "",
         this.size,
         elapsedSeconds,
         this.color,
-        (item as T & { tintColor?: { r: number; g: number; b: number; a: number } }).tintColor
-          ? new Color(
-              (item as T & { tintColor: { r: number; g: number; b: number; a: number } }).tintColor.r,
-              (item as T & { tintColor: { r: number; g: number; b: number; a: number } }).tintColor.g,
-              (item as T & { tintColor: { r: number; g: number; b: number; a: number } }).tintColor.b,
-              (item as T & { tintColor: { r: number; g: number; b: number; a: number } }).tintColor.a,
-            )
-          : undefined,
+        tintColor,
       );
       node.setPosition(
         (item.x - centerX) * worldScale,
