@@ -26,6 +26,7 @@ function createFrame(): ClientFrame {
           typeId: 0,
           spriteKey: "enemy_bat",
           displayName: "Bat",
+          visualScale: 1,
         },
       ],
       projectiles: [
@@ -49,6 +50,7 @@ function createFrame(): ClientFrame {
           spriteKey: "pickup_xp_small",
           displayName: "Small XP Gem",
           grantKind: "xp",
+          visualScale: 1,
         },
       ],
       weaponEffects: [],

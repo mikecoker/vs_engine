@@ -5,6 +5,7 @@ export interface EnemyViewModel extends PositionedViewModel {
   typeId: number;
   spriteKey: string;
   displayName: string;
+  visualScale: number;
 }
 
 export class EnemyRenderPool {
@@ -16,6 +17,7 @@ export class EnemyRenderPool {
     typeId: 0,
     spriteKey: "",
     displayName: "",
+    visualScale: 1,
   }));
 
   public sync(activeCount: number): void {

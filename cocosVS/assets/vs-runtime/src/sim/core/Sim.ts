@@ -157,15 +157,18 @@ export class Sim implements SimApi {
   }
 
   private executeTick(inputFrame: Readonly<SimInput>): void {
+    const advancesSimulation = isSimulationAdvancingState(this.world.runState.current);
     this.world.time.tick += 1;
-    this.world.time.elapsedSeconds += this.config.fixedStepSeconds;
+    if (advancesSimulation) {
+      this.world.time.elapsedSeconds += this.config.fixedStepSeconds;
+    }
     this.world.debug.tick = this.world.time.tick;
 
     const context = createFrameContext(this.world, this.config, inputFrame);
 
     for (const system of this.pipeline) {
       const counter = this.world.debug.systemCounters[system.name];
-      if (system.phase === "gameplay" && !isSimulationAdvancingState(this.world.runState.current)) {
+      if (system.phase === "gameplay" && !advancesSimulation) {
         counter.skippedTicks += 1;
         continue;
       }
@@ -174,7 +177,7 @@ export class Sim implements SimApi {
       system.execute(context);
     }
 
-    if (isSimulationAdvancingState(this.world.runState.current)) {
+    if (advancesSimulation) {
       this.world.debug.gameplayTicks += 1;
     }
 

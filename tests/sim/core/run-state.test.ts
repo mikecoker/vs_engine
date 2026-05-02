@@ -22,6 +22,30 @@ test("pause prevents gameplay systems from executing", () => {
     before.systems.PlayerMovementSystem.skippedTicks + 1,
   );
   assert.equal(after.systems.RunStateSystem.executedTicks, before.systems.RunStateSystem.executedTicks + 1);
+  assert.equal(after.counters.elapsedSeconds, before.counters.elapsedSeconds);
+});
+
+test("level-up and pause do not advance elapsed sim time while waiting", () => {
+  const sim = createSim({}, loadPrototypeContentRegistry());
+  sim.resetRun(42);
+  sim.step(1 / 60);
+
+  const beforePause = sim.getDebugSnapshot();
+  sim.setRunState(RunState.Paused);
+  for (let index = 0; index < 180; index += 1) {
+    sim.step(1 / 60);
+  }
+
+  const afterPause = sim.getDebugSnapshot();
+  assert.equal(afterPause.counters.elapsedSeconds, beforePause.counters.elapsedSeconds);
+
+  sim.setRunState(RunState.LevelUpChoice);
+  for (let index = 0; index < 180; index += 1) {
+    sim.step(1 / 60);
+  }
+
+  const afterLevelUp = sim.getDebugSnapshot();
+  assert.equal(afterLevelUp.counters.elapsedSeconds, beforePause.counters.elapsedSeconds);
 });
 
 test("reset clears transient world state and queues", () => {

@@ -62,6 +62,8 @@ export class CocosEntityPool<T extends SimpleEntityFrame> {
         (item.y - centerY) * worldScale,
         0,
       );
+      const visualScale = (item as T & { visualScale?: number }).visualScale ?? 1;
+      node.setScale(visualScale, visualScale, 1);
     }
   }
 }

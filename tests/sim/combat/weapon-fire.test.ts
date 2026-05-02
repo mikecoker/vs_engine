@@ -71,6 +71,32 @@ test("weapon levels increase projectile output", () => {
   assert.equal(context.world.commands.projectileSpawn.count, 2);
 });
 
+test("weapon targeting prioritizes minibosses and bosses over nearer trash mobs", () => {
+  const context = createCombatContext();
+  const enemies = ensureEnemyStore(context.world);
+
+  const batSlot = enemies.allocate();
+  enemies.posX[batSlot] = 90;
+  enemies.posY[batSlot] = 0;
+  enemies.radius[batSlot] = 10;
+  enemies.hp[batSlot] = 10;
+  enemies.xpValue[batSlot] = 1;
+
+  const bossSlot = enemies.allocate();
+  enemies.posX[bossSlot] = 0;
+  enemies.posY[bossSlot] = 220;
+  enemies.radius[bossSlot] = 24;
+  enemies.hp[bossSlot] = 500;
+  enemies.xpValue[bossSlot] = 24;
+
+  stepWeaponFire(context);
+
+  assert.equal(context.world.commands.projectileSpawn.count, 1);
+  const projectile = context.world.commands.projectileSpawn.get(0);
+  assert.equal(Math.abs(projectile.velX) < 1e-6, true);
+  assert.equal(projectile.velY > 0, true);
+});
+
 test("holy aura applies area damage around the player", () => {
   const context = createCombatContext();
   const content = context.world.content as ContentRegistry;

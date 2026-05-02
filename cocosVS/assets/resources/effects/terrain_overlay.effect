@@ -1,0 +1,140 @@
+CCEffect %{
+  techniques:
+  - passes:
+    - vert: sprite-vs:vert
+      frag: sprite-fs:frag
+      depthStencilState:
+        depthTest: false
+        depthWrite: false
+      blendState:
+        targets:
+        - blend: true
+          blendSrc: src_alpha
+          blendDst: one_minus_src_alpha
+          blendDstAlpha: one_minus_src_alpha
+      rasterizerState:
+        cullMode: none
+      properties:
+        alphaThreshold: { value: 0.5 }
+        chunkOrigin: { value: [0.0, 0.0] }
+        chunkSize: { value: [1024.0, 1024.0] }
+        maskScale: { value: 0.0016 }
+        maskThreshold: { value: 0.54 }
+        maskSoftness: { value: 0.18 }
+        overlayOpacity: { value: 0.92 }
+        invWorldScale: { value: 0.5 }
+}%
+
+CCProgram sprite-vs %{
+  precision highp float;
+  #include <builtin/uniforms/cc-global>
+  #if USE_LOCAL
+    #include <builtin/uniforms/cc-local>
+  #endif
+  #if SAMPLE_FROM_RT
+    #include <common/common-define>
+  #endif
+  in vec3 a_position;
+  in vec2 a_texCoord;
+  in vec4 a_color;
+
+  out vec4 color;
+  out vec2 uv0;
+  out vec2 localPos;
+
+  vec4 vert () {
+    vec4 pos = vec4(a_position, 1.0);
+
+    #if USE_LOCAL
+      pos = cc_matWorld * pos;
+    #endif
+
+    #if USE_PIXEL_ALIGNMENT
+      pos = cc_matView * pos;
+      pos.xyz = floor(pos.xyz);
+      pos = cc_matProj * pos;
+    #else
+      pos = cc_matViewProj * pos;
+    #endif
+
+    uv0 = a_texCoord;
+    #if SAMPLE_FROM_RT
+      CC_HANDLE_RT_SAMPLE_FLIP(uv0);
+    #endif
+    color = a_color;
+    localPos = a_position.xy;
+
+    return pos;
+  }
+}%
+
+CCProgram sprite-fs %{
+  precision highp float;
+  #include <builtin/internal/embedded-alpha>
+  #include <builtin/internal/alpha-test>
+
+  in vec4 color;
+  in vec2 uv0;
+  in vec2 localPos;
+
+  uniform Constant {
+    vec2 chunkOrigin;
+    vec2 chunkSize;
+    float maskScale;
+    float maskThreshold;
+    float maskSoftness;
+    float overlayOpacity;
+    float invWorldScale;
+  };
+
+  #pragma builtin(local)
+  layout(set = 2, binding = 11) uniform sampler2D cc_spriteTexture;
+
+  float hash12(vec2 p) {
+    vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
+  }
+
+  float valueNoise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+
+    float a = hash12(i + vec2(0.0, 0.0));
+    float b = hash12(i + vec2(1.0, 0.0));
+    float c = hash12(i + vec2(0.0, 1.0));
+    float d = hash12(i + vec2(1.0, 1.0));
+
+    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+  }
+
+  float fbm(vec2 p) {
+    float total = 0.0;
+    float amplitude = 0.5;
+    float frequency = 1.0;
+    for (int octave = 0; octave < 4; octave += 1) {
+      total += valueNoise(p * frequency) * amplitude;
+      frequency *= 2.0;
+      amplitude *= 0.5;
+    }
+    return total;
+  }
+
+  vec4 frag () {
+    vec4 o = CCSampleWithAlphaSeparated(cc_spriteTexture, uv0);
+    o *= color;
+
+    vec2 worldPos = chunkOrigin + localPos;
+    vec2 noisePos = worldPos * invWorldScale * maskScale;
+    float coarse = fbm(noisePos);
+    float detail = fbm(noisePos * 2.7 + vec2(11.3, 7.1));
+    float mask = coarse * 0.78 + detail * 0.22;
+    float alphaBlend = smoothstep(maskThreshold - maskSoftness, maskThreshold + maskSoftness, mask);
+
+    o.a *= alphaBlend * overlayOpacity;
+
+    ALPHA_TEST(o);
+    return o;
+  }
+}%

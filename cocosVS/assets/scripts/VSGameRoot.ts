@@ -5,10 +5,13 @@ import {
   Component,
   EffectAsset,
   Graphics,
+  ImageAsset,
   Material,
   Node,
   Label,
   Sprite,
+  SpriteFrame,
+  Texture2D,
   UITransform,
   view,
   resources,
@@ -16,6 +19,7 @@ import {
 import { ClientSession } from "../vs-runtime/src/client/app/ClientSession.ts";
 import type { ClientFrame } from "../vs-runtime/src/client/app/ClientFrame.ts";
 import { loadPrototypeContentRegistry } from "../vs-runtime/src/sim/content/ContentLoader.ts";
+import { DEFAULT_SIM_BOUNDS } from "../vs-runtime/src/sim/core/SimConfig.ts";
 import { createSim } from "../vs-runtime/src/sim/core/Sim.ts";
 import { CocosEntityPool } from "./CocosEntityPool.ts";
 import { CocosInputState } from "./CocosInputState.ts";
@@ -34,6 +38,26 @@ const SCREEN_SHAKE_SECONDS = 0.2;
 const SCREEN_SHAKE_AMPLITUDE = 10;
 const PLAYER_HIT_FLASH_SCALE = 1.08;
 const PLAYER_FLASH_EFFECT_PATH = "effects/player_flash";
+const TERRAIN_BASE_TILE_PATH = "tiles/field_tile_01_256";
+const TERRAIN_OVERLAY_TILE_PATH = "tiles/field_tile_03_256";
+const TERRAIN_OVERLAY_EFFECT_PATH = "effects/terrain_overlay";
+const TERRAIN_CHUNK_WORLD_SIZE = 512;
+const TERRAIN_CHUNK_RADIUS_X = 2;
+const TERRAIN_CHUNK_RADIUS_Y = 2;
+const TERRAIN_MASK_SCALE = 0.0011;
+const TERRAIN_MASK_THRESHOLD = 0.46;
+const TERRAIN_MASK_SOFTNESS = 0.26;
+const TERRAIN_OVERLAY_OPACITY = 0.88;
+const OUT_OF_BOUNDS_SHADE_ALPHA = 138;
+
+interface TerrainChunkRuntime {
+  readonly node: Node;
+  readonly baseSprite: Sprite;
+  readonly overlaySprite: Sprite;
+  readonly overlayMaterial: Material;
+  chunkX: number;
+  chunkY: number;
+}
 
 @ccclass("VSGameRoot")
 export class VSGameRoot extends Component {
@@ -50,6 +74,8 @@ export class VSGameRoot extends Component {
   private readonly session = new ClientSession(this.sim, this.content);
 
   private worldLayer: Node | null = null;
+  private terrainLayer: Node | null = null;
+  private boundsShadeNode: Node | null = null;
   private hudLabel: Label | null = null;
   private overlayLabel: Label | null = null;
   private borderFlashNode: Node | null = null;
@@ -66,6 +92,12 @@ export class VSGameRoot extends Component {
   private screenShakeRemaining = 0;
   private shakePhase = 0;
   private playerFlashMaterial: Material | null = null;
+  private terrainBaseTexture: Texture2D | null = null;
+  private terrainOverlayTexture: Texture2D | null = null;
+  private terrainBaseFrame: SpriteFrame | null = null;
+  private terrainOverlayFrame: SpriteFrame | null = null;
+  private terrainOverlayEffect: EffectAsset | null = null;
+  private terrainChunks: TerrainChunkRuntime[] = [];
   private enemyPool: CocosEntityPool<ClientFrame["render"]["enemies"][number]> | null = null;
   private projectilePool: CocosEntityPool<ClientFrame["render"]["projectiles"][number]> | null = null;
   private pickupPool: CocosEntityPool<ClientFrame["render"]["pickups"][number]> | null = null;
@@ -73,6 +105,7 @@ export class VSGameRoot extends Component {
   protected onLoad(): void {
     this.followPlayer = true;
     this.ensureSceneNodes();
+    this.loadTerrainAssets();
     this.loadPlayerFlashMaterial();
     this.inputState.enable();
     this.session.dispatch({
@@ -116,9 +149,12 @@ export class VSGameRoot extends Component {
     backgroundNode.parent = this.worldLayer;
     this.drawBackground(backgroundNode, visible.width, visible.height);
 
-    const gridNode = new Node("Grid");
-    gridNode.parent = this.worldLayer;
-    this.drawGrid(gridNode, visible.width, visible.height, 64);
+    this.terrainLayer = new Node("TerrainChunks");
+    this.terrainLayer.parent = this.worldLayer;
+    this.buildTerrainChunkRing();
+
+    this.boundsShadeNode = new Node("BoundsShade");
+    this.boundsShadeNode.parent = this.worldLayer;
 
     this.playerNode = this.createVisualNode("Player", PLAYER_VISUAL_SIZE);
     this.playerNode.parent = this.worldLayer;
@@ -157,6 +193,8 @@ export class VSGameRoot extends Component {
     const centerX = frame.camera.centerX;
     const centerY = frame.camera.centerY;
     this.applyScreenShake();
+    this.updateTerrainChunks(centerX, centerY);
+    this.renderBoundsShade(centerX, centerY);
     const playerFlashScale = this.playerHitFlashRemaining > 0
       ? this.getPlayerFlashScale()
       : 1;
@@ -274,6 +312,194 @@ export class VSGameRoot extends Component {
     const graphics = node.addComponent(Graphics);
     graphics.fillColor = new Color(18, 24, 34, 255);
     graphics.rect(-width / 2, -height / 2, width, height);
+    graphics.fill();
+  }
+
+  private loadTerrainAssets(): void {
+    resources.load(TERRAIN_BASE_TILE_PATH, ImageAsset, (error, asset) => {
+      if (error || !asset) {
+        return;
+      }
+
+      const texture = new Texture2D();
+      texture.image = asset;
+      this.terrainBaseTexture = texture;
+      const frame = new SpriteFrame();
+      frame.texture = texture;
+      this.terrainBaseFrame = frame;
+      this.refreshTerrainChunkAssets();
+    });
+
+    resources.load(TERRAIN_OVERLAY_TILE_PATH, ImageAsset, (error, asset) => {
+      if (error || !asset) {
+        return;
+      }
+
+      const texture = new Texture2D();
+      texture.image = asset;
+      this.terrainOverlayTexture = texture;
+      const frame = new SpriteFrame();
+      frame.texture = texture;
+      this.terrainOverlayFrame = frame;
+      this.refreshTerrainChunkAssets();
+    });
+
+    resources.load(TERRAIN_OVERLAY_EFFECT_PATH, EffectAsset, (error, effectAsset) => {
+      if (error || !effectAsset) {
+        return;
+      }
+
+      this.terrainOverlayEffect = effectAsset;
+      this.refreshTerrainChunkAssets();
+    });
+  }
+
+  private buildTerrainChunkRing(): void {
+    if (!this.terrainLayer) {
+      return;
+    }
+
+    const chunkRenderSize = TERRAIN_CHUNK_WORLD_SIZE * this.worldScale;
+    for (let y = -TERRAIN_CHUNK_RADIUS_Y; y <= TERRAIN_CHUNK_RADIUS_Y; y += 1) {
+      for (let x = -TERRAIN_CHUNK_RADIUS_X; x <= TERRAIN_CHUNK_RADIUS_X; x += 1) {
+        const node = new Node(`TerrainChunk_${x}_${y}`);
+        node.parent = this.terrainLayer;
+
+        const baseNode = new Node("Base");
+        baseNode.parent = node;
+        const baseTransform = baseNode.addComponent(UITransform);
+        baseTransform.setContentSize(chunkRenderSize, chunkRenderSize);
+        const baseSprite = baseNode.addComponent(Sprite);
+        baseSprite.sizeMode = Sprite.SizeMode.CUSTOM;
+        baseSprite.type = Sprite.Type.TILED;
+
+        const overlayNode = new Node("Overlay");
+        overlayNode.parent = node;
+        const overlayTransform = overlayNode.addComponent(UITransform);
+        overlayTransform.setContentSize(chunkRenderSize, chunkRenderSize);
+        const overlaySprite = overlayNode.addComponent(Sprite);
+        overlaySprite.sizeMode = Sprite.SizeMode.CUSTOM;
+        overlaySprite.type = Sprite.Type.TILED;
+
+        const overlayMaterial = new Material();
+        this.terrainChunks.push({
+          node,
+          baseSprite,
+          overlaySprite,
+          overlayMaterial,
+          chunkX: Number.NaN,
+          chunkY: Number.NaN,
+        });
+      }
+    }
+  }
+
+  private refreshTerrainChunkAssets(): void {
+    if (!this.terrainBaseFrame || !this.terrainOverlayFrame || !this.terrainOverlayEffect) {
+      return;
+    }
+
+    for (const chunk of this.terrainChunks) {
+      chunk.baseSprite.spriteFrame = this.terrainBaseFrame;
+      chunk.overlaySprite.spriteFrame = this.terrainOverlayFrame;
+      chunk.baseSprite.color = new Color(255, 255, 255, 255);
+      chunk.overlayMaterial.initialize({
+        effectAsset: this.terrainOverlayEffect,
+      });
+      chunk.overlayMaterial.setProperty("maskScale", TERRAIN_MASK_SCALE);
+      chunk.overlayMaterial.setProperty("maskThreshold", TERRAIN_MASK_THRESHOLD);
+      chunk.overlayMaterial.setProperty("maskSoftness", TERRAIN_MASK_SOFTNESS);
+      chunk.overlayMaterial.setProperty("overlayOpacity", TERRAIN_OVERLAY_OPACITY);
+      chunk.overlayMaterial.setProperty("invWorldScale", 1 / this.worldScale);
+      chunk.overlayMaterial.setProperty("chunkSize", [
+        TERRAIN_CHUNK_WORLD_SIZE * this.worldScale,
+        TERRAIN_CHUNK_WORLD_SIZE * this.worldScale,
+      ]);
+      chunk.overlaySprite.customMaterial = chunk.overlayMaterial;
+    }
+  }
+
+  private updateTerrainChunks(centerX: number, centerY: number): void {
+    if (this.terrainChunks.length === 0) {
+      return;
+    }
+
+    const cameraChunkX = Math.floor(centerX / TERRAIN_CHUNK_WORLD_SIZE);
+    const cameraChunkY = Math.floor(centerY / TERRAIN_CHUNK_WORLD_SIZE);
+    let chunkIndex = 0;
+    for (let offsetY = -TERRAIN_CHUNK_RADIUS_Y; offsetY <= TERRAIN_CHUNK_RADIUS_Y; offsetY += 1) {
+      for (let offsetX = -TERRAIN_CHUNK_RADIUS_X; offsetX <= TERRAIN_CHUNK_RADIUS_X; offsetX += 1) {
+        const chunk = this.terrainChunks[chunkIndex];
+        chunkIndex += 1;
+        const chunkX = cameraChunkX + offsetX;
+        const chunkY = cameraChunkY + offsetY;
+        if (chunk.chunkX !== chunkX || chunk.chunkY !== chunkY) {
+          chunk.chunkX = chunkX;
+          chunk.chunkY = chunkY;
+          chunk.overlayMaterial.setProperty("chunkOrigin", [
+            (chunkX * TERRAIN_CHUNK_WORLD_SIZE + TERRAIN_CHUNK_WORLD_SIZE * 0.5) * this.worldScale,
+            (chunkY * TERRAIN_CHUNK_WORLD_SIZE + TERRAIN_CHUNK_WORLD_SIZE * 0.5) * this.worldScale,
+          ]);
+        }
+
+        chunk.node.setPosition(
+          (chunkX * TERRAIN_CHUNK_WORLD_SIZE - centerX + TERRAIN_CHUNK_WORLD_SIZE * 0.5) * this.worldScale,
+          (chunkY * TERRAIN_CHUNK_WORLD_SIZE - centerY + TERRAIN_CHUNK_WORLD_SIZE * 0.5) * this.worldScale,
+          0,
+        );
+      }
+    }
+  }
+
+  private renderBoundsShade(centerX: number, centerY: number): void {
+    if (!this.boundsShadeNode) {
+      return;
+    }
+
+    const visible = view.getVisibleSize();
+    const graphics = this.boundsShadeNode.getComponent(Graphics) ?? this.boundsShadeNode.addComponent(Graphics);
+    const transform = this.boundsShadeNode.getComponent(UITransform) ?? this.boundsShadeNode.addComponent(UITransform);
+    transform.setContentSize(visible.width, visible.height);
+    graphics.clear();
+
+    const halfWorldWidth = visible.width / (2 * this.worldScale);
+    const halfWorldHeight = visible.height / (2 * this.worldScale);
+    const viewMinX = centerX - halfWorldWidth;
+    const viewMaxX = centerX + halfWorldWidth;
+    const viewMinY = centerY - halfWorldHeight;
+    const viewMaxY = centerY + halfWorldHeight;
+    const playerBounds = this.sim.config.bounds?.player ?? DEFAULT_SIM_BOUNDS.player;
+
+    const drawRect = (minX: number, minY: number, maxX: number, maxY: number): void => {
+      const width = maxX - minX;
+      const height = maxY - minY;
+      if (width <= 0 || height <= 0) {
+        return;
+      }
+
+      graphics.rect(
+        (minX - centerX) * this.worldScale,
+        (minY - centerY) * this.worldScale,
+        width * this.worldScale,
+        height * this.worldScale,
+      );
+    };
+
+    graphics.fillColor = new Color(10, 12, 18, OUT_OF_BOUNDS_SHADE_ALPHA);
+    drawRect(viewMinX, viewMinY, Math.min(playerBounds.minX, viewMaxX), viewMaxY);
+    drawRect(Math.max(playerBounds.maxX, viewMinX), viewMinY, viewMaxX, viewMaxY);
+    drawRect(
+      Math.max(viewMinX, playerBounds.minX),
+      viewMinY,
+      Math.min(viewMaxX, playerBounds.maxX),
+      Math.min(playerBounds.minY, viewMaxY),
+    );
+    drawRect(
+      Math.max(viewMinX, playerBounds.minX),
+      Math.max(playerBounds.maxY, viewMinY),
+      Math.min(viewMaxX, playerBounds.maxX),
+      viewMaxY,
+    );
     graphics.fill();
   }
 
@@ -459,34 +685,6 @@ export class VSGameRoot extends Component {
 
     const intensity = Math.max(0, Math.min(1, this.playerHitFlashRemaining / PLAYER_HIT_FLASH_SECONDS));
     this.playerFlashMaterial.setProperty("flashAmount", intensity);
-  }
-
-  private drawGrid(node: Node, width: number, height: number, spacing: number): void {
-    const transform = node.addComponent(UITransform);
-    transform.setContentSize(width, height);
-    const graphics = node.addComponent(Graphics);
-    graphics.lineWidth = 1;
-    graphics.strokeColor = new Color(50, 64, 82, 255);
-
-    for (let x = -Math.floor(width / 2); x <= Math.floor(width / 2); x += spacing) {
-      graphics.moveTo(x, -height / 2);
-      graphics.lineTo(x, height / 2);
-    }
-
-    for (let y = -Math.floor(height / 2); y <= Math.floor(height / 2); y += spacing) {
-      graphics.moveTo(-width / 2, y);
-      graphics.lineTo(width / 2, y);
-    }
-
-    graphics.stroke();
-
-    graphics.lineWidth = 2;
-    graphics.strokeColor = new Color(90, 120, 160, 255);
-    graphics.moveTo(-width / 2, 0);
-    graphics.lineTo(width / 2, 0);
-    graphics.moveTo(0, -height / 2);
-    graphics.lineTo(0, height / 2);
-    graphics.stroke();
   }
 
   private createVisualNode(name: string, size: number): Node {

@@ -10,6 +10,7 @@ import { ensureEnemyStore, forEachActiveEnemySlot } from "./EnemyStore.ts";
 export const DEFAULT_SPAWN_SAFE_RADIUS = 340;
 export const DEFAULT_SPAWN_RING_THICKNESS = 180;
 export const DEFAULT_MAX_ACTIVE_ENEMIES = 500;
+export const DEFAULT_EDGE_SPAWN_MARGIN = 220;
 
 export interface SpawnDirectorState {
   initialized: boolean;
@@ -106,10 +107,18 @@ export function sampleOffscreenSpawnPoint(world: World, safeRadius: number, ring
   const radius = safeRadius + world.rng.next() * ringThickness;
   const angle = world.rng.next() * Math.PI * 2;
 
-  const bounds = world.config.bounds?.spawn ?? DEFAULT_SIM_BOUNDS.spawn;
+  const spawnBounds = world.config.bounds?.spawn ?? DEFAULT_SIM_BOUNDS.spawn;
+  const playerBounds = world.config.bounds?.player ?? DEFAULT_SIM_BOUNDS.player;
+  const edgeBounds = {
+    minX: Math.max(spawnBounds.minX, playerBounds.minX - DEFAULT_EDGE_SPAWN_MARGIN),
+    maxX: Math.min(spawnBounds.maxX, playerBounds.maxX + DEFAULT_EDGE_SPAWN_MARGIN),
+    minY: Math.max(spawnBounds.minY, playerBounds.minY - DEFAULT_EDGE_SPAWN_MARGIN),
+    maxY: Math.min(spawnBounds.maxY, playerBounds.maxY + DEFAULT_EDGE_SPAWN_MARGIN),
+  };
+
   return {
-    x: Math.max(bounds.minX, Math.min(bounds.maxX, centerX + Math.cos(angle) * radius)),
-    y: Math.max(bounds.minY, Math.min(bounds.maxY, centerY + Math.sin(angle) * radius)),
+    x: Math.max(edgeBounds.minX, Math.min(edgeBounds.maxX, centerX + Math.cos(angle) * radius)),
+    y: Math.max(edgeBounds.minY, Math.min(edgeBounds.maxY, centerY + Math.sin(angle) * radius)),
   };
 }
 

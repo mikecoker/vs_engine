@@ -7,6 +7,30 @@ import { presentPlayer, type PlayerViewModel } from "./PlayerPresenter.ts";
 import { ProjectileRenderPool, type ProjectileViewModel } from "./ProjectileRenderPool.ts";
 import { presentWeaponEffects, type WeaponEffectViewModel } from "./WeaponEffectPresenter.ts";
 
+function getEnemyVisualScale(spriteKey: string): number {
+  if (spriteKey === "enemy_boss_lich") {
+    return 1.8;
+  }
+
+  if (spriteKey === "enemy_miniboss_executioner") {
+    return 1.45;
+  }
+
+  return 1;
+}
+
+function getPickupVisualScale(spriteKey: string): number {
+  if (spriteKey === "pickup_xp_large") {
+    return 1.7;
+  }
+
+  if (spriteKey === "pickup_xp_medium") {
+    return 1.35;
+  }
+
+  return 1;
+}
+
 export interface PresentedRenderFrame {
   readonly elapsedSeconds: number;
   readonly player: PlayerViewModel;
@@ -40,6 +64,7 @@ export class RenderPresenter {
       item.typeId = snapshot.enemies.typeIds[index] ?? 0;
       item.spriteKey = visual?.spriteKey ?? "";
       item.displayName = visual?.displayName ?? "";
+      item.visualScale = getEnemyVisualScale(item.spriteKey);
       item.x = snapshot.enemies.posX[index] ?? 0;
       item.y = snapshot.enemies.posY[index] ?? 0;
     }
@@ -67,6 +92,7 @@ export class RenderPresenter {
       item.spriteKey = visual?.spriteKey ?? "";
       item.displayName = visual?.displayName ?? "";
       item.grantKind = visual?.grantKind ?? "xp";
+      item.visualScale = getPickupVisualScale(item.spriteKey);
       item.tintColor = item.grantKind === "heal"
         ? { r: 255, g: 120, b: 210, a: 255 }
         : item.grantKind === "magnet"
