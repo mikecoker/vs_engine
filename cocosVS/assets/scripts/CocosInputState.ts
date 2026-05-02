@@ -9,6 +9,7 @@ export class CocosInputState {
   private debugGrantXpPressed = false;
   private debugSpawnWavePressed = false;
   private debugToggleInvulnerablePressed = false;
+  private debugToggleTerrainBasePressed = false;
   private pendingUpgradeChoice: number | null = null;
 
   public enable(): void {
@@ -26,6 +27,12 @@ export class CocosInputState {
     const choice = this.pendingUpgradeChoice;
     this.pendingUpgradeChoice = null;
     return choice;
+  }
+
+  public consumeToggleTerrainBase(): boolean {
+    const pressed = this.debugToggleTerrainBasePressed;
+    this.debugToggleTerrainBasePressed = false;
+    return pressed;
   }
 
   public toClientInput(): ClientInputSource {
@@ -74,6 +81,9 @@ export class CocosInputState {
         break;
       case KeyCode.KEY_I:
         this.debugToggleInvulnerablePressed = true;
+        break;
+      case KeyCode.KEY_B:
+        this.debugToggleTerrainBasePressed = true;
         break;
       case KeyCode.DIGIT_1:
         this.pendingUpgradeChoice = 0;

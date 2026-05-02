@@ -4,6 +4,9 @@
 
   /* Add your custom configuration here. */
   "compilerOptions": {
-    "strict": false
+    "strict": false,
+    "allowImportingTsExtensions": true,
+    "lib": ["ES2020", "DOM"],
+    "skipLibCheck": true
   }
 }

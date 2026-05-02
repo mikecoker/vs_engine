@@ -96,3 +96,20 @@ test("heal pickups restore hp on collection", () => {
   assert.equal(world.stores.player.hp, 62);
   assert.equal(world.stores.pickups.activeCount, 0);
 });
+
+test("heal pickups remain active when player is already at max hp", () => {
+  const { world, context } = createProgressionContext();
+  world.commands.pickupSpawn.enqueue(3, 4, 6, 10, 12);
+
+  applyPickupSpawnCommands(context);
+  world.stores.player.exists = true;
+  world.stores.player.posX = 4;
+  world.stores.player.posY = 6;
+  world.stores.player.hp = 100;
+  world.stores.player.maxHp = 100;
+
+  stepPickupCollectSystem(context);
+
+  assert.equal(world.stores.player.hp, 100);
+  assert.equal(world.stores.pickups.activeCount, 1);
+});

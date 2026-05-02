@@ -38,6 +38,11 @@ export function stepPickupCollectSystem(context: FrameContext): void {
     if (value > 0 && pickupDef?.grantKind === "xp") {
       world.commands.xpGrant.enqueue(value);
     } else if (value > 0 && pickupDef?.grantKind === "heal") {
+      if (player.hp >= player.maxHp) {
+        slot += 1;
+        continue;
+      }
+
       player.hp = Math.min(player.maxHp, player.hp + value);
     } else if (pickupDef?.grantKind === "magnet") {
       magnetizeAllXpPickups(context);

@@ -11,7 +11,6 @@ import {
   Label,
   Sprite,
   SpriteFrame,
-  Texture2D,
   UITransform,
   view,
   resources,
@@ -39,24 +38,24 @@ const SCREEN_SHAKE_AMPLITUDE = 10;
 const PLAYER_HIT_FLASH_SCALE = 1.08;
 const PLAYER_FLASH_EFFECT_PATH = "effects/player_flash";
 const TERRAIN_BASE_TILE_PATH = "tiles/field_tile_01_256";
-const TERRAIN_OVERLAY_TILE_PATH = "tiles/field_tile_03_256";
-const TERRAIN_OVERLAY_EFFECT_PATH = "effects/terrain_overlay";
-const TERRAIN_CHUNK_WORLD_SIZE = 512;
-const TERRAIN_CHUNK_RADIUS_X = 2;
-const TERRAIN_CHUNK_RADIUS_Y = 2;
-const TERRAIN_MASK_SCALE = 0.0011;
-const TERRAIN_MASK_THRESHOLD = 0.46;
-const TERRAIN_MASK_SOFTNESS = 0.26;
-const TERRAIN_OVERLAY_OPACITY = 0.88;
-const OUT_OF_BOUNDS_SHADE_ALPHA = 138;
+const TERRAIN_OVERLAY_TILE_PATH = "tiles/field_tile_02_256";
+const TERRAIN_WORLD_TEXTURE_SIZE = 2048;
+const DEFAULT_TERRAIN_MASK_NOISE_SCALE = 2.35;
+const DEFAULT_TERRAIN_MASK_CUTOFF = 0.48;
+const DEFAULT_TERRAIN_MASK_FALLOFF = 0.28;
+const DEFAULT_TERRAIN_MASK_BLUR_RADIUS = 18;
+const DEFAULT_TERRAIN_OVERLAY_OPACITY = 0.72;
+const OUT_OF_BOUNDS_SHADE_ALPHA = 78;
+const OUT_OF_BOUNDS_EDGE_ALPHA = 190;
+
+type TerrainDebugMode = "blend" | "base_only" | "overlay_only" | "mask";
 
 interface TerrainChunkRuntime {
   readonly node: Node;
-  readonly baseSprite: Sprite;
-  readonly overlaySprite: Sprite;
-  readonly overlayMaterial: Material;
+  readonly sprite: Sprite;
   chunkX: number;
   chunkY: number;
+  frameKey: string;
 }
 
 @ccclass("VSGameRoot")
@@ -66,6 +65,21 @@ export class VSGameRoot extends Component {
 
   @property
   public followPlayer = true;
+
+  @property
+  public terrainMaskNoiseScale = DEFAULT_TERRAIN_MASK_NOISE_SCALE;
+
+  @property
+  public terrainMaskCutoff = DEFAULT_TERRAIN_MASK_CUTOFF;
+
+  @property
+  public terrainMaskFalloff = DEFAULT_TERRAIN_MASK_FALLOFF;
+
+  @property
+  public terrainMaskBlurRadius = DEFAULT_TERRAIN_MASK_BLUR_RADIUS;
+
+  @property
+  public terrainOverlayOpacity = DEFAULT_TERRAIN_OVERLAY_OPACITY;
 
   private readonly inputState = new CocosInputState();
   private readonly sprites = new CocosSpriteLibrary();
@@ -92,11 +106,13 @@ export class VSGameRoot extends Component {
   private screenShakeRemaining = 0;
   private shakePhase = 0;
   private playerFlashMaterial: Material | null = null;
-  private terrainBaseTexture: Texture2D | null = null;
-  private terrainOverlayTexture: Texture2D | null = null;
-  private terrainBaseFrame: SpriteFrame | null = null;
-  private terrainOverlayFrame: SpriteFrame | null = null;
-  private terrainOverlayEffect: EffectAsset | null = null;
+  private terrainBaseImage: ImageAsset | null = null;
+  private terrainOverlayImage: ImageAsset | null = null;
+  private readonly terrainFrameCache = new Map<string, SpriteFrame>();
+  private terrainWorldNode: Node | null = null;
+  private terrainWorldSprite: Sprite | null = null;
+  private terrainWorldFrameKey = "";
+  private terrainDebugMode: TerrainDebugMode = "blend";
   private terrainChunks: TerrainChunkRuntime[] = [];
   private enemyPool: CocosEntityPool<ClientFrame["render"]["enemies"][number]> | null = null;
   private projectilePool: CocosEntityPool<ClientFrame["render"]["projectiles"][number]> | null = null;
@@ -126,6 +142,17 @@ export class VSGameRoot extends Component {
         type: "select_upgrade",
         choiceIndex: pendingChoice,
       });
+    }
+
+    if (this.inputState.consumeToggleTerrainBase()) {
+      this.terrainDebugMode = this.terrainDebugMode === "blend"
+        ? "base_only"
+        : this.terrainDebugMode === "base_only"
+          ? "overlay_only"
+          : this.terrainDebugMode === "overlay_only"
+            ? "mask"
+            : "blend";
+      this.refreshTerrainWorldAsset(true);
     }
 
     const inputFrame = this.inputState.toClientInput();
@@ -233,6 +260,7 @@ export class VSGameRoot extends Component {
         `POS ${frame.render.player.x.toFixed(1)}, ${frame.render.player.y.toFixed(1)}  ` +
         `IN ${this.latestMoveX.toFixed(0)}, ${this.latestMoveY.toFixed(0)}  ` +
         `CAM FOLLOW  ` +
+        `TERRAIN ${this.terrainDebugMode.toUpperCase()}  ` +
         `INVULN ${frame.debug.playerInvulnerable ? "ON" : "OFF"}`;
     }
 
@@ -248,7 +276,7 @@ export class VSGameRoot extends Component {
       } else if (frame.runState.showGameOverOverlay) {
         lines.push("GAME OVER");
       } else {
-        lines.push("Controls: WASD move, P pause, 1/2/3 choose, G XP, V +10 mobs, I invuln");
+        lines.push("Controls: WASD move, P pause, 1/2/3 choose, G XP, V +10 mobs, I invuln, B terrain");
         lines.push("Player vel readout comes from position delta; camera is following");
       }
       this.overlayLabel.string = lines.join("\n");
@@ -321,13 +349,8 @@ export class VSGameRoot extends Component {
         return;
       }
 
-      const texture = new Texture2D();
-      texture.image = asset;
-      this.terrainBaseTexture = texture;
-      const frame = new SpriteFrame();
-      frame.texture = texture;
-      this.terrainBaseFrame = frame;
-      this.refreshTerrainChunkAssets();
+      this.terrainBaseImage = asset;
+      this.refreshTerrainChunkAssets(true);
     });
 
     resources.load(TERRAIN_OVERLAY_TILE_PATH, ImageAsset, (error, asset) => {
@@ -335,22 +358,8 @@ export class VSGameRoot extends Component {
         return;
       }
 
-      const texture = new Texture2D();
-      texture.image = asset;
-      this.terrainOverlayTexture = texture;
-      const frame = new SpriteFrame();
-      frame.texture = texture;
-      this.terrainOverlayFrame = frame;
-      this.refreshTerrainChunkAssets();
-    });
-
-    resources.load(TERRAIN_OVERLAY_EFFECT_PATH, EffectAsset, (error, effectAsset) => {
-      if (error || !effectAsset) {
-        return;
-      }
-
-      this.terrainOverlayEffect = effectAsset;
-      this.refreshTerrainChunkAssets();
+      this.terrainOverlayImage = asset;
+      this.refreshTerrainChunkAssets(true);
     });
   }
 
@@ -359,96 +368,316 @@ export class VSGameRoot extends Component {
       return;
     }
 
-    const chunkRenderSize = TERRAIN_CHUNK_WORLD_SIZE * this.worldScale;
-    for (let y = -TERRAIN_CHUNK_RADIUS_Y; y <= TERRAIN_CHUNK_RADIUS_Y; y += 1) {
-      for (let x = -TERRAIN_CHUNK_RADIUS_X; x <= TERRAIN_CHUNK_RADIUS_X; x += 1) {
-        const node = new Node(`TerrainChunk_${x}_${y}`);
-        node.parent = this.terrainLayer;
+    this.terrainWorldNode = new Node("TerrainWorld");
+    this.terrainWorldNode.parent = this.terrainLayer;
+    const transform = this.terrainWorldNode.addComponent(UITransform);
+    const bounds = this.sim.config.bounds?.spawn ?? DEFAULT_SIM_BOUNDS.spawn;
+    transform.setContentSize(
+      (bounds.maxX - bounds.minX) * this.worldScale,
+      (bounds.maxY - bounds.minY) * this.worldScale,
+    );
+    this.terrainWorldSprite = this.terrainWorldNode.addComponent(Sprite);
+    this.terrainWorldSprite.sizeMode = Sprite.SizeMode.CUSTOM;
+    this.terrainWorldSprite.type = Sprite.Type.SIMPLE;
+  }
 
-        const baseNode = new Node("Base");
-        baseNode.parent = node;
-        const baseTransform = baseNode.addComponent(UITransform);
-        baseTransform.setContentSize(chunkRenderSize, chunkRenderSize);
-        const baseSprite = baseNode.addComponent(Sprite);
-        baseSprite.sizeMode = Sprite.SizeMode.CUSTOM;
-        baseSprite.type = Sprite.Type.TILED;
-
-        const overlayNode = new Node("Overlay");
-        overlayNode.parent = node;
-        const overlayTransform = overlayNode.addComponent(UITransform);
-        overlayTransform.setContentSize(chunkRenderSize, chunkRenderSize);
-        const overlaySprite = overlayNode.addComponent(Sprite);
-        overlaySprite.sizeMode = Sprite.SizeMode.CUSTOM;
-        overlaySprite.type = Sprite.Type.TILED;
-
-        const overlayMaterial = new Material();
-        this.terrainChunks.push({
-          node,
-          baseSprite,
-          overlaySprite,
-          overlayMaterial,
-          chunkX: Number.NaN,
-          chunkY: Number.NaN,
-        });
+  private refreshTerrainChunkAssets(force = false): void {
+    this.refreshTerrainWorldAsset(force);
+    for (const chunk of this.terrainChunks) {
+      if (Number.isNaN(chunk.chunkX) || Number.isNaN(chunk.chunkY)) {
+        continue;
       }
+
+      this.refreshTerrainChunkAsset(chunk, force);
     }
   }
 
-  private refreshTerrainChunkAssets(): void {
-    if (!this.terrainBaseFrame || !this.terrainOverlayFrame || !this.terrainOverlayEffect) {
+  private refreshTerrainChunkAsset(chunk: TerrainChunkRuntime, force = false): void {
+    const frameKey = `${this.terrainDebugMode}:${chunk.chunkX}:${chunk.chunkY}`;
+    if (!force && chunk.frameKey === frameKey) {
       return;
     }
 
-    for (const chunk of this.terrainChunks) {
-      chunk.baseSprite.spriteFrame = this.terrainBaseFrame;
-      chunk.overlaySprite.spriteFrame = this.terrainOverlayFrame;
-      chunk.baseSprite.color = new Color(255, 255, 255, 255);
-      chunk.overlayMaterial.initialize({
-        effectAsset: this.terrainOverlayEffect,
-      });
-      chunk.overlayMaterial.setProperty("maskScale", TERRAIN_MASK_SCALE);
-      chunk.overlayMaterial.setProperty("maskThreshold", TERRAIN_MASK_THRESHOLD);
-      chunk.overlayMaterial.setProperty("maskSoftness", TERRAIN_MASK_SOFTNESS);
-      chunk.overlayMaterial.setProperty("overlayOpacity", TERRAIN_OVERLAY_OPACITY);
-      chunk.overlayMaterial.setProperty("invWorldScale", 1 / this.worldScale);
-      chunk.overlayMaterial.setProperty("chunkSize", [
-        TERRAIN_CHUNK_WORLD_SIZE * this.worldScale,
-        TERRAIN_CHUNK_WORLD_SIZE * this.worldScale,
-      ]);
-      chunk.overlaySprite.customMaterial = chunk.overlayMaterial;
+    const frame = this.getTerrainFrame(this.terrainDebugMode, chunk.chunkX, chunk.chunkY);
+    if (!frame) {
+      return;
     }
+
+    chunk.frameKey = frameKey;
+    chunk.sprite.spriteFrame = frame;
+    chunk.sprite.type = Sprite.Type.SIMPLE;
+    chunk.sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+    chunk.sprite.color = new Color(255, 255, 255, 255);
+    chunk.sprite.customMaterial = null;
+  }
+
+  private refreshTerrainWorldAsset(force = false): void {
+    if (!this.terrainWorldSprite) {
+      return;
+    }
+
+    const frameKey = this.terrainDebugMode;
+    if (!force && this.terrainWorldFrameKey === frameKey) {
+      return;
+    }
+
+    const frame = this.getTerrainFrame(this.terrainDebugMode);
+    if (!frame) {
+      return;
+    }
+
+    this.terrainWorldFrameKey = frameKey;
+    this.terrainWorldSprite.spriteFrame = frame;
+    this.terrainWorldSprite.type = Sprite.Type.SIMPLE;
+    this.terrainWorldSprite.sizeMode = Sprite.SizeMode.CUSTOM;
+    this.terrainWorldSprite.color = new Color(255, 255, 255, 255);
+    this.terrainWorldSprite.customMaterial = null;
   }
 
   private updateTerrainChunks(centerX: number, centerY: number): void {
+    if (this.terrainWorldNode) {
+      const bounds = this.sim.config.bounds?.spawn ?? DEFAULT_SIM_BOUNDS.spawn;
+      this.terrainWorldNode.setPosition(
+        ((bounds.minX + bounds.maxX) * 0.5 - centerX) * this.worldScale,
+        ((bounds.minY + bounds.maxY) * 0.5 - centerY) * this.worldScale,
+        0,
+      );
+      this.refreshTerrainWorldAsset();
+    }
+
     if (this.terrainChunks.length === 0) {
       return;
     }
+  }
 
-    const cameraChunkX = Math.floor(centerX / TERRAIN_CHUNK_WORLD_SIZE);
-    const cameraChunkY = Math.floor(centerY / TERRAIN_CHUNK_WORLD_SIZE);
-    let chunkIndex = 0;
-    for (let offsetY = -TERRAIN_CHUNK_RADIUS_Y; offsetY <= TERRAIN_CHUNK_RADIUS_Y; offsetY += 1) {
-      for (let offsetX = -TERRAIN_CHUNK_RADIUS_X; offsetX <= TERRAIN_CHUNK_RADIUS_X; offsetX += 1) {
-        const chunk = this.terrainChunks[chunkIndex];
-        chunkIndex += 1;
-        const chunkX = cameraChunkX + offsetX;
-        const chunkY = cameraChunkY + offsetY;
-        if (chunk.chunkX !== chunkX || chunk.chunkY !== chunkY) {
-          chunk.chunkX = chunkX;
-          chunk.chunkY = chunkY;
-          chunk.overlayMaterial.setProperty("chunkOrigin", [
-            (chunkX * TERRAIN_CHUNK_WORLD_SIZE + TERRAIN_CHUNK_WORLD_SIZE * 0.5) * this.worldScale,
-            (chunkY * TERRAIN_CHUNK_WORLD_SIZE + TERRAIN_CHUNK_WORLD_SIZE * 0.5) * this.worldScale,
-          ]);
-        }
+  private getTerrainFrame(mode: TerrainDebugMode, chunkX = 0, chunkY = 0): SpriteFrame | null {
+    if (!this.terrainBaseImage || !this.terrainOverlayImage) {
+      return null;
+    }
 
-        chunk.node.setPosition(
-          (chunkX * TERRAIN_CHUNK_WORLD_SIZE - centerX + TERRAIN_CHUNK_WORLD_SIZE * 0.5) * this.worldScale,
-          (chunkY * TERRAIN_CHUNK_WORLD_SIZE - centerY + TERRAIN_CHUNK_WORLD_SIZE * 0.5) * this.worldScale,
-          0,
-        );
+    const frameKey = mode;
+    const cached = this.terrainFrameCache.get(frameKey);
+    if (cached) {
+      return cached;
+    }
+
+    const width = TERRAIN_WORLD_TEXTURE_SIZE;
+    const height = TERRAIN_WORLD_TEXTURE_SIZE;
+    const bounds = this.sim.config.bounds?.spawn ?? DEFAULT_SIM_BOUNDS.spawn;
+    const baseCanvas = this.drawRepeatedTerrainTile(this.terrainBaseImage, width, height, bounds);
+    const overlayCanvas = this.drawRepeatedTerrainTile(this.terrainOverlayImage, width, height, bounds);
+    const maskValues = this.generateTerrainMask(width, height, bounds);
+    const canvas = mode === "base_only"
+      ? baseCanvas
+      : mode === "overlay_only"
+        ? overlayCanvas
+        : mode === "mask"
+          ? this.drawTerrainMask(maskValues, width, height)
+          : this.drawBlendedTerrain(baseCanvas, overlayCanvas, maskValues);
+    const frame = SpriteFrame.createWithImage(canvas);
+    this.terrainFrameCache.set(frameKey, frame);
+    return frame;
+  }
+
+  private drawRepeatedTerrainTile(
+    image: ImageAsset,
+    width: number,
+    height: number,
+    bounds: typeof DEFAULT_SIM_BOUNDS.spawn,
+  ): HTMLCanvasElement {
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+    if (!context || !image.data) {
+      return canvas;
+    }
+
+    const source = image.data as CanvasImageSource;
+    const sourceWidth = "width" in source ? Number(source.width) : TERRAIN_WORLD_TEXTURE_SIZE;
+    const sourceHeight = "height" in source ? Number(source.height) : TERRAIN_WORLD_TEXTURE_SIZE;
+    const worldWidth = bounds.maxX - bounds.minX;
+    const worldHeight = bounds.maxY - bounds.minY;
+    const pixelsPerWorldX = width / worldWidth;
+    const pixelsPerWorldY = height / worldHeight;
+    const patternOffsetX = (((bounds.minX * pixelsPerWorldX) % sourceWidth) + sourceWidth) % sourceWidth;
+    const patternOffsetY = (((bounds.minY * pixelsPerWorldY) % sourceHeight) + sourceHeight) % sourceHeight;
+    const pattern = context.createPattern(image.data as any, "repeat");
+    if (pattern) {
+      context.save();
+      context.translate(-patternOffsetX, -patternOffsetY);
+      context.fillStyle = pattern;
+      context.fillRect(patternOffsetX, patternOffsetY, canvas.width, canvas.height);
+      context.restore();
+    }
+
+    return canvas;
+  }
+
+  private generateTerrainMask(width: number, height: number, bounds: typeof DEFAULT_SIM_BOUNDS.spawn): Float32Array {
+    const blurRadius = Math.max(0, Math.round(this.terrainMaskBlurRadius));
+    const raw = new Float32Array(width * height);
+    const worldWidth = bounds.maxX - bounds.minX;
+    const worldHeight = bounds.maxY - bounds.minY;
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        const worldX = bounds.minX + (x / Math.max(1, width - 1)) * worldWidth;
+        const worldY = bounds.minY + (y / Math.max(1, height - 1)) * worldHeight;
+        const nx = ((worldX - bounds.minX) / worldWidth) * this.terrainMaskNoiseScale;
+        const ny = ((worldY - bounds.minY) / worldHeight) * this.terrainMaskNoiseScale;
+        const coarse = this.valueNoise(nx, ny);
+        const detail = this.valueNoise(nx * 2.7 + 11.3, ny * 2.7 + 7.1);
+        raw[y * width + x] = coarse * 0.78 + detail * 0.22;
       }
     }
+
+    const blurred = this.gaussianBlurMask(raw, width, height, blurRadius);
+    const alpha = new Float32Array(width * height);
+    for (let index = 0; index < blurred.length; index += 1) {
+      alpha[index] = this.smoothstep(
+        this.terrainMaskCutoff,
+        this.terrainMaskCutoff + this.terrainMaskFalloff,
+        blurred[index],
+      );
+    }
+
+    return alpha;
+  }
+
+  private gaussianBlurMask(source: Float32Array, width: number, height: number, radius: number): Float32Array {
+    if (radius <= 0) {
+      return source;
+    }
+
+    const kernel = this.buildGaussianKernel(radius);
+    const temp = new Float32Array(source.length);
+    const output = new Float32Array(source.length);
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        let total = 0;
+        for (let offset = -radius; offset <= radius; offset += 1) {
+          const sampleX = Math.max(0, Math.min(width - 1, x + offset));
+          total += source[y * width + sampleX] * kernel[offset + radius];
+        }
+        temp[y * width + x] = total;
+      }
+    }
+
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        let total = 0;
+        for (let offset = -radius; offset <= radius; offset += 1) {
+          const sampleY = Math.max(0, Math.min(height - 1, y + offset));
+          total += temp[sampleY * width + x] * kernel[offset + radius];
+        }
+        output[y * width + x] = total;
+      }
+    }
+
+    return output;
+  }
+
+  private buildGaussianKernel(radius: number): Float32Array {
+    const kernel = new Float32Array(radius * 2 + 1);
+    const sigma = Math.max(1, radius / 2.5);
+    let sum = 0;
+    for (let offset = -radius; offset <= radius; offset += 1) {
+      const value = Math.exp(-(offset * offset) / (2 * sigma * sigma));
+      kernel[offset + radius] = value;
+      sum += value;
+    }
+
+    for (let index = 0; index < kernel.length; index += 1) {
+      kernel[index] /= sum;
+    }
+
+    return kernel;
+  }
+
+  private drawTerrainMask(maskValues: Float32Array, width: number, height: number): HTMLCanvasElement {
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+    if (!context) {
+      return canvas;
+    }
+
+    const imageData = context.createImageData(width, height);
+    for (let index = 0; index < maskValues.length; index += 1) {
+      const value = Math.round(maskValues[index] * 255);
+      const pixelIndex = index * 4;
+      imageData.data[pixelIndex] = value;
+      imageData.data[pixelIndex + 1] = value;
+      imageData.data[pixelIndex + 2] = value;
+      imageData.data[pixelIndex + 3] = 255;
+    }
+    context.putImageData(imageData, 0, 0);
+    return canvas;
+  }
+
+  private drawBlendedTerrain(
+    baseCanvas: HTMLCanvasElement,
+    overlayCanvas: HTMLCanvasElement,
+    maskValues: Float32Array,
+  ): HTMLCanvasElement {
+    const canvas = document.createElement("canvas");
+    canvas.width = baseCanvas.width;
+    canvas.height = baseCanvas.height;
+    const context = canvas.getContext("2d");
+    const baseContext = baseCanvas.getContext("2d");
+    const overlayContext = overlayCanvas.getContext("2d");
+    if (!context || !baseContext || !overlayContext) {
+      return canvas;
+    }
+
+    const baseData = baseContext.getImageData(0, 0, canvas.width, canvas.height);
+    const overlayData = overlayContext.getImageData(0, 0, canvas.width, canvas.height);
+    const output = context.createImageData(canvas.width, canvas.height);
+    for (let index = 0; index < maskValues.length; index += 1) {
+      const blend = Math.max(0, Math.min(1, maskValues[index] * this.terrainOverlayOpacity));
+      const pixelIndex = index * 4;
+      output.data[pixelIndex] = Math.round(
+        baseData.data[pixelIndex] + (overlayData.data[pixelIndex] - baseData.data[pixelIndex]) * blend,
+      );
+      output.data[pixelIndex + 1] = Math.round(
+        baseData.data[pixelIndex + 1] + (overlayData.data[pixelIndex + 1] - baseData.data[pixelIndex + 1]) * blend,
+      );
+      output.data[pixelIndex + 2] = Math.round(
+        baseData.data[pixelIndex + 2] + (overlayData.data[pixelIndex + 2] - baseData.data[pixelIndex + 2]) * blend,
+      );
+      output.data[pixelIndex + 3] = 255;
+    }
+    context.putImageData(output, 0, 0);
+    return canvas;
+  }
+
+  private valueNoise(x: number, y: number): number {
+    const ix = Math.floor(x);
+    const iy = Math.floor(y);
+    const fx = x - ix;
+    const fy = y - iy;
+    const ux = fx * fx * (3 - 2 * fx);
+    const uy = fy * fy * (3 - 2 * fy);
+
+    const a = this.hash2(ix, iy);
+    const b = this.hash2(ix + 1, iy);
+    const c = this.hash2(ix, iy + 1);
+    const d = this.hash2(ix + 1, iy + 1);
+
+    const ab = a + (b - a) * ux;
+    const cd = c + (d - c) * ux;
+    return ab + (cd - ab) * uy;
+  }
+
+  private hash2(x: number, y: number): number {
+    const sinValue = Math.sin(x * 127.1 + y * 311.7) * 43758.5453123;
+    return sinValue - Math.floor(sinValue);
+  }
+
+  private smoothstep(edge0: number, edge1: number, value: number): number {
+    const t = Math.max(0, Math.min(1, (value - edge0) / (edge1 - edge0)));
+    return t * t * (3 - 2 * t);
   }
 
   private renderBoundsShade(centerX: number, centerY: number): void {
@@ -501,6 +730,22 @@ export class VSGameRoot extends Component {
       viewMaxY,
     );
     graphics.fill();
+
+    const clampedMinX = Math.max(viewMinX, playerBounds.minX);
+    const clampedMaxX = Math.min(viewMaxX, playerBounds.maxX);
+    const clampedMinY = Math.max(viewMinY, playerBounds.minY);
+    const clampedMaxY = Math.min(viewMaxY, playerBounds.maxY);
+    if (clampedMinX < clampedMaxX && clampedMinY < clampedMaxY) {
+      graphics.lineWidth = 2;
+      graphics.strokeColor = new Color(255, 210, 115, OUT_OF_BOUNDS_EDGE_ALPHA);
+      graphics.rect(
+        (clampedMinX - centerX) * this.worldScale,
+        (clampedMinY - centerY) * this.worldScale,
+        (clampedMaxX - clampedMinX) * this.worldScale,
+        (clampedMaxY - clampedMinY) * this.worldScale,
+      );
+      graphics.stroke();
+    }
   }
 
   private updateDamageIndicators(frame: ClientFrame, dt: number): void {
