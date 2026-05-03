@@ -1,6 +1,8 @@
 import { ensureEnemyStore } from "../enemies/EnemyStore.ts";
 import type { World } from "../world/World.ts";
 
+const ELITE_PRIORITY_RANGE = 360;
+
 function getEnemyTargetPriority(xpValue: number): number {
   if (xpValue >= 24) {
     return 2;
@@ -34,7 +36,9 @@ export function findNearestEnemySlot(
       continue;
     }
 
-    const priority = getEnemyTargetPriority(enemies.xpValue[slot]);
+    const priority = distanceSq <= ELITE_PRIORITY_RANGE * ELITE_PRIORITY_RANGE
+      ? getEnemyTargetPriority(enemies.xpValue[slot])
+      : 0;
     if (priority < bestPriority) {
       continue;
     }

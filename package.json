@@ -9,6 +9,8 @@
     "ascii": "node --import tsx scripts/run-ascii.ts",
     "ascii:dump": "node --import tsx scripts/run-ascii.ts --dump",
     "build:runtime": "npm run build -w @vs-engine/runtime",
+    "cocos:refresh": "npm run build:runtime && node scripts/cocos-refresh.mjs",
+    "cocos:refresh:clean": "npm run build:runtime && node scripts/cocos-refresh.mjs --clean",
     "test": "node --import tsx --test $(find tests -name '*.test.ts' | sort)",
     "test:watch": "node --import tsx --test --watch $(find tests -name '*.test.ts' | sort)",
     "typecheck": "tsc --noEmit"

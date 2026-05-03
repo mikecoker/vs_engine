@@ -100,3 +100,34 @@ test("magnet pickup magnetizes all xp gems on the board", () => {
   assert.ok(store.magnetTimeRemaining[0] > 0);
   assert.ok(store.magnetTimeRemaining[1] > 0);
 });
+
+test("heal pickups do not magnetize while player is full health", () => {
+  const { world, context } = createPickupContext();
+  world.stores.player.hp = 100;
+  world.stores.player.maxHp = 100;
+  world.commands.pickupSpawn.enqueue(3, 90, 0, 10, 12);
+  applyPickupSpawnCommands(context);
+
+  const store = ensurePickupStore(world);
+
+  stepPickupMagnetSystem(context);
+
+  assert.equal(store.magnetized[0], 0);
+  assert.equal(store.posX[0], 90);
+  assert.equal(store.posY[0], 0);
+});
+
+test("heal pickups magnetize once player can use healing", () => {
+  const { world, context } = createPickupContext();
+  world.stores.player.hp = 80;
+  world.stores.player.maxHp = 100;
+  world.commands.pickupSpawn.enqueue(3, 90, 0, 10, 12);
+  applyPickupSpawnCommands(context);
+
+  const store = ensurePickupStore(world);
+
+  stepPickupMagnetSystem(context);
+
+  assert.equal(store.magnetized[0], 1);
+  assert.ok(store.posX[0] < 90);
+});

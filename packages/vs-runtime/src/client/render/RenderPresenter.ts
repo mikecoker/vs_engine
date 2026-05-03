@@ -24,7 +24,15 @@ function getEnemyVisualScale(spriteKey: string): number {
   return 1;
 }
 
-function getPickupVisualScale(spriteKey: string): number {
+function getPickupVisualScale(spriteKey: string, grantKind: "xp" | "heal" | "magnet"): number {
+  if (grantKind === "heal") {
+    return 1.5;
+  }
+
+  if (grantKind === "magnet") {
+    return 2.25;
+  }
+
   if (spriteKey === "pickup_xp_large") {
     return 1.7;
   }
@@ -97,7 +105,7 @@ export class RenderPresenter {
       item.spriteKey = visual?.spriteKey ?? "";
       item.displayName = visual?.displayName ?? "";
       item.grantKind = visual?.grantKind ?? "xp";
-      item.visualScale = getPickupVisualScale(item.spriteKey);
+      item.visualScale = getPickupVisualScale(item.spriteKey, item.grantKind);
       item.tintColor = item.grantKind === "heal"
         ? HEAL_PICKUP_TINT
         : item.grantKind === "magnet"

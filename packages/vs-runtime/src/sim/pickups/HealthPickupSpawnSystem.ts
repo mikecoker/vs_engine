@@ -6,6 +6,8 @@ import { ensurePickupStore } from "./PickupStore.ts";
 
 const HEALTH_PICKUP_SPAWN_INTERVAL_SECONDS = 18;
 const MAX_ACTIVE_HEALTH_PICKUPS = 2;
+const HEALTH_PICKUP_MIN_PLAYER_DISTANCE = 150;
+const HEALTH_PICKUP_MAX_PLAYER_DISTANCE = 260;
 
 const healthPickupIndexCache = new WeakMap<object, number>();
 
@@ -49,6 +51,10 @@ function countActiveHealPickups(context: FrameContext, healPickupIndex: number):
   return count;
 }
 
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
 export function stepHealthPickupSpawner(context: FrameContext): void {
   const { world } = context;
   const player = world.stores.player;
@@ -78,8 +84,11 @@ export function stepHealthPickupSpawner(context: FrameContext): void {
   }
 
   const bounds = world.config.bounds?.player ?? DEFAULT_SIM_BOUNDS.player;
-  const x = bounds.minX + world.rng.next() * (bounds.maxX - bounds.minX);
-  const y = bounds.minY + world.rng.next() * (bounds.maxY - bounds.minY);
+  const angle = world.rng.next() * Math.PI * 2;
+  const distance = HEALTH_PICKUP_MIN_PLAYER_DISTANCE +
+    world.rng.next() * (HEALTH_PICKUP_MAX_PLAYER_DISTANCE - HEALTH_PICKUP_MIN_PLAYER_DISTANCE);
+  const x = clamp(player.posX + Math.cos(angle) * distance, bounds.minX, bounds.maxX);
+  const y = clamp(player.posY + Math.sin(angle) * distance, bounds.minY, bounds.maxY);
   world.commands.pickupSpawn.enqueue(healPickupIndex, x, y, pickupDef.radius, pickupDef.defaultValue);
   world.scratch.nextHealthPickupSpawnAtSeconds += HEALTH_PICKUP_SPAWN_INTERVAL_SECONDS;
 }

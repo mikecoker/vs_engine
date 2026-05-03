@@ -31,8 +31,8 @@ export const prototypePickups: readonly PickupDef[] = [
   },
   {
     id: pickupId("pickup.heal_small"),
-    displayName: "Small Health Orb",
-    spriteKey: "pickup_xp_small",
+    displayName: "Health Heart",
+    spriteKey: "pickup_heart_red",
     radius: 10,
     magnetSpeed: 220,
     grantKind: "heal",

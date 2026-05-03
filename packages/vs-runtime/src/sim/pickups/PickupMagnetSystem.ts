@@ -1,7 +1,18 @@
 import type { FrameContext } from "../core/FrameContext.ts";
-import { ensurePickupStore } from "./PickupStore.ts";
+import { ensurePickupStore, getPickupDefByIndex } from "./PickupStore.ts";
 
 export const PICKUP_MAGNET_DURATION_SECONDS = 0.25;
+
+function canMagnetizePickup(context: FrameContext, slot: number): boolean {
+  const { world } = context;
+  const pickupDef = getPickupDefByIndex(world.content, world.stores.pickups.typeIds[slot]);
+  if (pickupDef?.grantKind !== "heal") {
+    return true;
+  }
+
+  const player = world.stores.player;
+  return player.hp < player.maxHp;
+}
 
 export function stepPickupMagnetSystem(context: FrameContext): void {
   const { dt, world } = context;
@@ -15,6 +26,13 @@ export function stepPickupMagnetSystem(context: FrameContext): void {
 
   for (let denseIndex = 0; denseIndex < store.activeCount; denseIndex += 1) {
     const slot = store.activeSlots[denseIndex];
+    if (!canMagnetizePickup(context, slot)) {
+      store.magnetized[slot] = 0;
+      store.magnetTimeRemaining[slot] = 0;
+      store.velX[slot] = 0;
+      store.velY[slot] = 0;
+      continue;
+    }
 
     const dx = player.posX - store.posX[slot];
     const dy = player.posY - store.posY[slot];

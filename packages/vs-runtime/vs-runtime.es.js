@@ -199,7 +199,13 @@ function getEnemyVisualScale(spriteKey) {
   }
   return 1;
 }
-function getPickupVisualScale(spriteKey) {
+function getPickupVisualScale(spriteKey, grantKind) {
+  if (grantKind === "heal") {
+    return 1.5;
+  }
+  if (grantKind === "magnet") {
+    return 2.25;
+  }
   if (spriteKey === "pickup_xp_large") {
     return 1.7;
   }
@@ -255,7 +261,7 @@ var RenderPresenter = class {
       item.spriteKey = visual?.spriteKey ?? "";
       item.displayName = visual?.displayName ?? "";
       item.grantKind = visual?.grantKind ?? "xp";
-      item.visualScale = getPickupVisualScale(item.spriteKey);
+      item.visualScale = getPickupVisualScale(item.spriteKey, item.grantKind);
       item.tintColor = item.grantKind === "heal" ? HEAL_PICKUP_TINT : item.grantKind === "magnet" ? MAGNET_PICKUP_TINT : void 0;
       item.x = snapshot.pickups.posX[index] ?? 0;
       item.y = snapshot.pickups.posY[index] ?? 0;
@@ -2548,6 +2554,7 @@ function getWeaponDefByIndex(content, weaponIndex) {
 }
 
 // src/sim/combat/WeaponTargeting.ts
+var ELITE_PRIORITY_RANGE = 360;
 function getEnemyTargetPriority(xpValue) {
   if (xpValue >= 24) {
     return 2;
@@ -2571,7 +2578,7 @@ function findNearestEnemySlot(world, originX, originY, maxRange = Number.POSITIV
     if (distanceSq > maxRangeSq) {
       continue;
     }
-    const priority = getEnemyTargetPriority(enemies.xpValue[slot]);
+    const priority = distanceSq <= ELITE_PRIORITY_RANGE * ELITE_PRIORITY_RANGE ? getEnemyTargetPriority(enemies.xpValue[slot]) : 0;
     if (priority < bestPriority) {
       continue;
     }
@@ -3190,6 +3197,8 @@ function applyPickupSpawnCommands(context) {
 // src/sim/pickups/HealthPickupSpawnSystem.ts
 var HEALTH_PICKUP_SPAWN_INTERVAL_SECONDS = 18;
 var MAX_ACTIVE_HEALTH_PICKUPS = 2;
+var HEALTH_PICKUP_MIN_PLAYER_DISTANCE = 150;
+var HEALTH_PICKUP_MAX_PLAYER_DISTANCE = 260;
 var healthPickupIndexCache = /* @__PURE__ */ new WeakMap();
 function isPickupRegistry(content) {
   const registry = content;
@@ -3225,6 +3234,9 @@ function countActiveHealPickups(context, healPickupIndex) {
   }
   return count;
 }
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
 function stepHealthPickupSpawner(context) {
   const { world } = context;
   const player = world.stores.player;
@@ -3249,8 +3261,10 @@ function stepHealthPickupSpawner(context) {
     return;
   }
   const bounds = world.config.bounds?.player ?? DEFAULT_SIM_BOUNDS.player;
-  const x = bounds.minX + world.rng.next() * (bounds.maxX - bounds.minX);
-  const y = bounds.minY + world.rng.next() * (bounds.maxY - bounds.minY);
+  const angle = world.rng.next() * Math.PI * 2;
+  const distance = HEALTH_PICKUP_MIN_PLAYER_DISTANCE + world.rng.next() * (HEALTH_PICKUP_MAX_PLAYER_DISTANCE - HEALTH_PICKUP_MIN_PLAYER_DISTANCE);
+  const x = clamp(player.posX + Math.cos(angle) * distance, bounds.minX, bounds.maxX);
+  const y = clamp(player.posY + Math.sin(angle) * distance, bounds.minY, bounds.maxY);
   world.commands.pickupSpawn.enqueue(healPickupIndex, x, y, pickupDef.radius, pickupDef.defaultValue);
   world.scratch.nextHealthPickupSpawnAtSeconds += HEALTH_PICKUP_SPAWN_INTERVAL_SECONDS;
 }
@@ -3326,6 +3340,15 @@ function stepMagnetPickupSpawner(context) {
 
 // src/sim/pickups/PickupMagnetSystem.ts
 var PICKUP_MAGNET_DURATION_SECONDS = 0.25;
+function canMagnetizePickup(context, slot) {
+  const { world } = context;
+  const pickupDef = getPickupDefByIndex(world.content, world.stores.pickups.typeIds[slot]);
+  if (pickupDef?.grantKind !== "heal") {
+    return true;
+  }
+  const player = world.stores.player;
+  return player.hp < player.maxHp;
+}
 function stepPickupMagnetSystem(context) {
   const { dt, world } = context;
   const player = world.stores.player;
@@ -3336,6 +3359,13 @@ function stepPickupMagnetSystem(context) {
   const magnetRadius = Math.max(0, player.pickupRadius);
   for (let denseIndex = 0; denseIndex < store.activeCount; denseIndex += 1) {
     const slot = store.activeSlots[denseIndex];
+    if (!canMagnetizePickup(context, slot)) {
+      store.magnetized[slot] = 0;
+      store.magnetTimeRemaining[slot] = 0;
+      store.velX[slot] = 0;
+      store.velY[slot] = 0;
+      continue;
+    }
     const dx = player.posX - store.posX[slot];
     const dy = player.posY - store.posY[slot];
     const distanceSq = dx * dx + dy * dy;
@@ -3986,8 +4016,8 @@ var prototypePickups = [
   },
   {
     id: pickupId("pickup.heal_small"),
-    displayName: "Small Health Orb",
-    spriteKey: "pickup_xp_small",
+    displayName: "Health Heart",
+    spriteKey: "pickup_heart_red",
     radius: 10,
     magnetSpeed: 220,
     grantKind: "heal",
