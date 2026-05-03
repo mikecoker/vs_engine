@@ -2,12 +2,19 @@
   "name": "vs-engine",
   "private": true,
   "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "ascii": "node --import tsx scripts/run-ascii.ts",
     "ascii:dump": "node --import tsx scripts/run-ascii.ts --dump",
+    "build:runtime": "npm run build -w @vs-engine/runtime",
     "test": "node --import tsx --test $(find tests -name '*.test.ts' | sort)",
     "test:watch": "node --import tsx --test --watch $(find tests -name '*.test.ts' | sort)",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@vs-engine/runtime": "file:packages/vs-runtime"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

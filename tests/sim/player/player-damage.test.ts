@@ -1,18 +1,18 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { loadPrototypeContentRegistry } from "../../../src/sim/content/ContentLoader";
-import type { FrameContext } from "../../../src/sim/core/FrameContext";
-import { RunState } from "../../../src/sim/core/RunState";
-import { DamageBuffer } from "../../../src/sim/core/commands/DamageBuffer";
-import { StateChangeBuffer } from "../../../src/sim/core/commands/StateChangeBuffer";
+import { loadPrototypeContentRegistry } from "@vs-engine/runtime/src/sim/content/ContentLoader";
+import type { FrameContext } from "@vs-engine/runtime/src/sim/core/FrameContext";
+import { RunState } from "@vs-engine/runtime/src/sim/core/RunState";
+import { DamageBuffer } from "@vs-engine/runtime/src/sim/core/commands/DamageBuffer";
+import { StateChangeBuffer } from "@vs-engine/runtime/src/sim/core/commands/StateChangeBuffer";
 import {
   applyDamageToPlayer,
   createPlayerStore,
   initializePlayerForRun,
   stepPlayerDamageSystem,
   tickPlayerInvulnerability,
-} from "../../../src/sim/player/PlayerApi";
+} from "@vs-engine/runtime/src/sim/player/PlayerApi";
 
 test("damage intake reduces hp and invulnerability blocks repeated immediate hits", () => {
   const content = loadPrototypeContentRegistry();

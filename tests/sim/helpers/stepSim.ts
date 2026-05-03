@@ -1,5 +1,5 @@
-import type { TestableSimLike } from '../../../src/sim/core/SimApi';
-import type { SimInput } from '../../../src/sim/core/SimInput';
+import type { TestableSimLike } from '@vs-engine/runtime/src/sim/core/SimApi';
+import type { SimInput } from '@vs-engine/runtime/src/sim/core/SimInput';
 import { createNeutralInput } from './fakeInput';
 
 export type StepInputFactory = SimInput | ((tick: number) => SimInput);

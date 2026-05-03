@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { createSim } from "../../../src/sim/core/Sim";
-import { RunState } from "../../../src/sim/core/RunState";
+import { createSim } from "@vs-engine/runtime/src/sim/core/Sim";
+import { RunState } from "@vs-engine/runtime/src/sim/core/RunState";
 
 test("sim constructs with stable default snapshots", () => {
   const sim = createSim();

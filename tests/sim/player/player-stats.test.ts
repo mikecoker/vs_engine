@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { loadPrototypeContentRegistry } from "../../../src/sim/content/ContentLoader";
+import { loadPrototypeContentRegistry } from "@vs-engine/runtime/src/sim/content/ContentLoader";
 import {
   applyPlayerStatModifiers,
   createPlayerStore,
   initializePlayerForRun,
   rebuildPlayerRuntimeStats,
-} from "../../../src/sim/player/PlayerApi";
+} from "@vs-engine/runtime/src/sim/player/PlayerApi";
 
 test("player reset initializes from prototype content", () => {
   const content = loadPrototypeContentRegistry();

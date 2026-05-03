@@ -1,15 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { loadPrototypeContentRegistry } from "../../../src/sim/content/ContentLoader";
-import type { FrameContext } from "../../../src/sim/core/FrameContext";
-import { RunState } from "../../../src/sim/core/RunState";
-import { mergeSimConfig } from "../../../src/sim/core/SimConfig";
-import { ensureEnemyStore } from "../../../src/sim/enemies/EnemyStore";
-import { queryProjectileHits } from "../../../src/sim/projectiles/ProjectileHitQuerySystem";
-import { ensureProjectileStore } from "../../../src/sim/projectiles/ProjectileStore";
-import { rebuildSpatialGrid } from "../../../src/sim/spatial/SpatialGridBuildSystem";
-import { createWorld } from "../../../src/sim/world/World";
+import { loadPrototypeContentRegistry } from "@vs-engine/runtime/src/sim/content/ContentLoader";
+import type { FrameContext } from "@vs-engine/runtime/src/sim/core/FrameContext";
+import { RunState } from "@vs-engine/runtime/src/sim/core/RunState";
+import { mergeSimConfig } from "@vs-engine/runtime/src/sim/core/SimConfig";
+import { ensureEnemyStore } from "@vs-engine/runtime/src/sim/enemies/EnemyStore";
+import { queryProjectileHits } from "@vs-engine/runtime/src/sim/projectiles/ProjectileHitQuerySystem";
+import { ensureProjectileStore } from "@vs-engine/runtime/src/sim/projectiles/ProjectileStore";
+import { rebuildSpatialGrid } from "@vs-engine/runtime/src/sim/spatial/SpatialGridBuildSystem";
+import { createWorld } from "@vs-engine/runtime/src/sim/world/World";
 
 test("projectile hit queries enqueue enemy damage and despawn non-piercing projectiles", () => {
   const world = createWorld(mergeSimConfig(), loadPrototypeContentRegistry(), RunState.Running, 31);

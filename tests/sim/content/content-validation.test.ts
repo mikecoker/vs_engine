@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { weaponId } from '../../../src/sim/content/ContentIds';
-import { prototypeContentBundle } from '../../../src/sim/content/defs';
+import { weaponId } from '@vs-engine/runtime/src/sim/content/ContentIds';
+import { prototypeContentBundle } from '@vs-engine/runtime/src/sim/content/defs/index';
 import {
   ContentValidationError,
   validateContentBundle,
-} from '../../../src/sim/content/ContentValidation';
+} from '@vs-engine/runtime/src/sim/content/ContentValidation';
 
 test('validateContentBundle rejects duplicate IDs', () => {
   const duplicateBundle = {

@@ -1,16 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { mergeSimConfig } from "../../../src/sim/core/SimConfig";
-import { RunState } from "../../../src/sim/core/RunState";
-import { loadPrototypeContentRegistry } from "../../../src/sim/content/ContentLoader";
-import { createWorld } from "../../../src/sim/world/World";
+import { mergeSimConfig } from "@vs-engine/runtime/src/sim/core/SimConfig";
+import { RunState } from "@vs-engine/runtime/src/sim/core/RunState";
+import { loadPrototypeContentRegistry } from "@vs-engine/runtime/src/sim/content/ContentLoader";
+import { createWorld } from "@vs-engine/runtime/src/sim/world/World";
 import {
   DEFAULT_EDGE_SPAWN_MARGIN,
   DEFAULT_SPAWN_SAFE_RADIUS,
   ensureSpawnDirector,
   stepSpawnDirector,
-} from "../../../src/sim/enemies/SpawnDirector";
+} from "@vs-engine/runtime/src/sim/enemies/SpawnDirector";
 
 test("spawn director emits the first wave batch on schedule", () => {
   const world = createWorld(

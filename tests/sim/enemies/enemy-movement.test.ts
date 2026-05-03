@@ -1,15 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { mergeSimConfig } from "../../../src/sim/core/SimConfig";
-import { RunState } from "../../../src/sim/core/RunState";
-import type { FrameContext } from "../../../src/sim/core/FrameContext";
-import { loadPrototypeContentRegistry } from "../../../src/sim/content/ContentLoader";
-import { createWorld } from "../../../src/sim/world/World";
-import { applyEnemySpawnCommands } from "../../../src/sim/enemies/EnemySpawnSystem";
-import { stepEnemyMovement } from "../../../src/sim/enemies/EnemyMovementSystem";
-import { ensureEnemyStore } from "../../../src/sim/enemies/EnemyStore";
-import { rebuildSpatialGrid } from "../../../src/sim/spatial/SpatialGridBuildSystem";
+import { mergeSimConfig } from "@vs-engine/runtime/src/sim/core/SimConfig";
+import { RunState } from "@vs-engine/runtime/src/sim/core/RunState";
+import type { FrameContext } from "@vs-engine/runtime/src/sim/core/FrameContext";
+import { loadPrototypeContentRegistry } from "@vs-engine/runtime/src/sim/content/ContentLoader";
+import { createWorld } from "@vs-engine/runtime/src/sim/world/World";
+import { applyEnemySpawnCommands } from "@vs-engine/runtime/src/sim/enemies/EnemySpawnSystem";
+import { stepEnemyMovement } from "@vs-engine/runtime/src/sim/enemies/EnemyMovementSystem";
+import { ensureEnemyStore } from "@vs-engine/runtime/src/sim/enemies/EnemyStore";
+import { rebuildSpatialGrid } from "@vs-engine/runtime/src/sim/spatial/SpatialGridBuildSystem";
 
 test("enemy movement reduces distance to the player", () => {
   const config = mergeSimConfig();

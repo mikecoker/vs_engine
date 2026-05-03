@@ -4,7 +4,7 @@ import type {
   SimContentLike,
   SimFactory,
   TestableSimLike,
-} from '../../src/sim/core/SimApi';
+} from '@vs-engine/runtime/src/sim/core/SimApi';
 
 export interface TestSimContent extends SimContentLike {
   enemyArchetypes: readonly string[];

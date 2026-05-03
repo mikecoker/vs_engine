@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { renderAsciiFrame } from "../../../src/client/ascii/AsciiRenderer";
-import type { ClientFrame } from "../../../src/client/app/ClientFrame";
+import { renderAsciiFrame } from "@vs-engine/runtime/src/client/ascii/AsciiRenderer";
+import type { ClientFrame } from "@vs-engine/runtime/src/client/app/ClientFrame";
 
 function createFrame(): ClientFrame {
   return {

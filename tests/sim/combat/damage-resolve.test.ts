@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { loadPrototypeContentRegistry } from "../../../src/sim/content/ContentLoader";
-import type { FrameContext } from "../../../src/sim/core/FrameContext";
-import { RunState } from "../../../src/sim/core/RunState";
-import { mergeSimConfig } from "../../../src/sim/core/SimConfig";
-import { resolveDamage } from "../../../src/sim/combat/DamageResolveSystem";
-import { ensureEnemyStore } from "../../../src/sim/enemies/EnemyStore";
-import { createWorld } from "../../../src/sim/world/World";
+import { loadPrototypeContentRegistry } from "@vs-engine/runtime/src/sim/content/ContentLoader";
+import type { FrameContext } from "@vs-engine/runtime/src/sim/core/FrameContext";
+import { RunState } from "@vs-engine/runtime/src/sim/core/RunState";
+import { mergeSimConfig } from "@vs-engine/runtime/src/sim/core/SimConfig";
+import { resolveDamage } from "@vs-engine/runtime/src/sim/combat/DamageResolveSystem";
+import { ensureEnemyStore } from "@vs-engine/runtime/src/sim/enemies/EnemyStore";
+import { createWorld } from "@vs-engine/runtime/src/sim/world/World";
 
 test("enemy death emits xp pickup spawn commands", () => {
   const world = createWorld(mergeSimConfig(), loadPrototypeContentRegistry(), RunState.Running, 23);

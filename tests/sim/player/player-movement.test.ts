@@ -1,14 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { loadPrototypeContentRegistry } from "../../../src/sim/content/ContentLoader";
-import type { FrameContext } from "../../../src/sim/core/FrameContext";
-import { RunState } from "../../../src/sim/core/RunState";
+import { loadPrototypeContentRegistry } from "@vs-engine/runtime/src/sim/content/ContentLoader";
+import type { FrameContext } from "@vs-engine/runtime/src/sim/core/FrameContext";
+import { RunState } from "@vs-engine/runtime/src/sim/core/RunState";
 import {
   createPlayerStore,
   initializePlayerForRun,
   stepPlayerMovement,
-} from "../../../src/sim/player/PlayerApi";
+} from "@vs-engine/runtime/src/sim/player/PlayerApi";
 import { createMoveInput, createNeutralInput } from "../helpers/fakeInput";
 
 function createMovementContext(

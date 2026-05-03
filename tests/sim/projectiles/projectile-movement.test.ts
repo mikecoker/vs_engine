@@ -1,14 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { loadPrototypeContentRegistry } from "../../../src/sim/content/ContentLoader";
-import type { FrameContext } from "../../../src/sim/core/FrameContext";
-import { RunState } from "../../../src/sim/core/RunState";
-import { mergeSimConfig } from "../../../src/sim/core/SimConfig";
-import { stepProjectileMovement } from "../../../src/sim/projectiles/ProjectileMovementSystem";
-import { spawnProjectilesFromCommands } from "../../../src/sim/projectiles/ProjectileSpawnSystem";
-import { ensureProjectileStore } from "../../../src/sim/projectiles/ProjectileStore";
-import { createWorld } from "../../../src/sim/world/World";
+import { loadPrototypeContentRegistry } from "@vs-engine/runtime/src/sim/content/ContentLoader";
+import type { FrameContext } from "@vs-engine/runtime/src/sim/core/FrameContext";
+import { RunState } from "@vs-engine/runtime/src/sim/core/RunState";
+import { mergeSimConfig } from "@vs-engine/runtime/src/sim/core/SimConfig";
+import { stepProjectileMovement } from "@vs-engine/runtime/src/sim/projectiles/ProjectileMovementSystem";
+import { spawnProjectilesFromCommands } from "@vs-engine/runtime/src/sim/projectiles/ProjectileSpawnSystem";
+import { ensureProjectileStore } from "@vs-engine/runtime/src/sim/projectiles/ProjectileStore";
+import { createWorld } from "@vs-engine/runtime/src/sim/world/World";
 
 test("projectiles advance by velocity after spawn commands are applied", () => {
   const world = createWorld(mergeSimConfig(), loadPrototypeContentRegistry(), RunState.Running, 29);

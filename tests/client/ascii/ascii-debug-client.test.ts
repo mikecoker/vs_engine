@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { AsciiDebugClient } from "../../../src/client/ascii/AsciiDebugClient";
-import { loadPrototypeContentRegistry } from "../../../src/sim/content/ContentLoader";
-import { createSim } from "../../../src/sim/core/Sim";
+import { AsciiDebugClient } from "@vs-engine/runtime/src/client/ascii/AsciiDebugClient";
+import { loadPrototypeContentRegistry } from "@vs-engine/runtime/src/sim/content/ContentLoader";
+import { createSim } from "@vs-engine/runtime/src/sim/core/Sim";
 
 test("AsciiDebugClient formats a textual frame after stepping", () => {
   const content = loadPrototypeContentRegistry();

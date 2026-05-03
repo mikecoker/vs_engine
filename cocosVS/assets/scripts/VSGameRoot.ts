@@ -15,11 +15,13 @@ import {
   view,
   resources,
 } from "cc";
-import { ClientSession } from "../vs-runtime/src/client/app/ClientSession.ts";
-import type { ClientFrame } from "../vs-runtime/src/client/app/ClientFrame.ts";
-import { loadPrototypeContentRegistry } from "../vs-runtime/src/sim/content/ContentLoader.ts";
-import { DEFAULT_SIM_BOUNDS } from "../vs-runtime/src/sim/core/SimConfig.ts";
-import { createSim } from "../vs-runtime/src/sim/core/Sim.ts";
+import {
+  ClientSession,
+  createSim,
+  DEFAULT_SIM_BOUNDS,
+  loadPrototypeContentRegistry,
+  type ClientFrame,
+} from "@vs-engine/runtime";
 import { CocosEntityPool } from "./CocosEntityPool.ts";
 import { CocosInputState } from "./CocosInputState.ts";
 import { CocosSpriteLibrary } from "./CocosSpriteLibrary.ts";

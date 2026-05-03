@@ -1,10 +1,10 @@
 import readline from "node:readline";
 
-import { loadPrototypeContentRegistry } from "../src/sim/content/ContentLoader";
-import { createSim } from "../src/sim/core/Sim";
-import { AsciiDebugClient } from "../src/client/ascii/AsciiDebugClient";
-import type { ClientInputSource } from "../src/client/input/ClientInputSource";
-import type { ClientFrame } from "../src/client/app/ClientFrame";
+import { loadPrototypeContentRegistry } from "@vs-engine/runtime/src/sim/content/ContentLoader";
+import { createSim } from "@vs-engine/runtime/src/sim/core/Sim";
+import { AsciiDebugClient } from "@vs-engine/runtime/src/client/ascii/AsciiDebugClient";
+import type { ClientInputSource } from "@vs-engine/runtime/src/client/input/ClientInputSource";
+import type { ClientFrame } from "@vs-engine/runtime/src/client/app/ClientFrame";
 
 const content = loadPrototypeContentRegistry();
 const sim = createSim({}, content, 1);

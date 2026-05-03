@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { ClientSession } from "../../../src/client/app/ClientSession";
-import { createSim } from "../../../src/sim/core/Sim";
-import { loadPrototypeContentRegistry } from "../../../src/sim/content/ContentLoader";
+import { ClientSession } from "@vs-engine/runtime/src/client/app/ClientSession";
+import { createSim } from "@vs-engine/runtime/src/sim/core/Sim";
+import { loadPrototypeContentRegistry } from "@vs-engine/runtime/src/sim/content/ContentLoader";
 
 test("ClientSession composes render, hud, camera, and debug state", () => {
   const content = loadPrototypeContentRegistry();

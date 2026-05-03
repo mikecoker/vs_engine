@@ -1,15 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { loadPrototypeContentRegistry } from "../../../src/sim/content/ContentLoader";
-import type { FrameContext } from "../../../src/sim/core/FrameContext";
-import { RunState } from "../../../src/sim/core/RunState";
-import { mergeSimConfig } from "../../../src/sim/core/SimConfig";
-import { applyPickupSpawnCommands } from "../../../src/sim/pickups/PickupSpawnSystem";
-import { stepPickupCollectSystem } from "../../../src/sim/pickups/PickupCollectSystem";
-import { stepProgression } from "../../../src/sim/progression/ProgressionSystem";
-import { ensureProgressionStore } from "../../../src/sim/progression/ProgressionStore";
-import { createWorld } from "../../../src/sim/world/World";
+import { loadPrototypeContentRegistry } from "@vs-engine/runtime/src/sim/content/ContentLoader";
+import type { FrameContext } from "@vs-engine/runtime/src/sim/core/FrameContext";
+import { RunState } from "@vs-engine/runtime/src/sim/core/RunState";
+import { mergeSimConfig } from "@vs-engine/runtime/src/sim/core/SimConfig";
+import { applyPickupSpawnCommands } from "@vs-engine/runtime/src/sim/pickups/PickupSpawnSystem";
+import { stepPickupCollectSystem } from "@vs-engine/runtime/src/sim/pickups/PickupCollectSystem";
+import { stepProgression } from "@vs-engine/runtime/src/sim/progression/ProgressionSystem";
+import { ensureProgressionStore } from "@vs-engine/runtime/src/sim/progression/ProgressionStore";
+import { createWorld } from "@vs-engine/runtime/src/sim/world/World";
 
 function createProgressionContext() {
   const world = createWorld(mergeSimConfig(), loadPrototypeContentRegistry(), RunState.Running, 11);

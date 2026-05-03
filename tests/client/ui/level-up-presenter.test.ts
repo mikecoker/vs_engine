@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { presentLevelUp } from "../../../src/client/ui/LevelUpPresenter";
+import { presentLevelUp } from "@vs-engine/runtime/src/client/ui/LevelUpPresenter";
 
 test("presentLevelUp hides the overlay when no payload exists", () => {
   const view = presentLevelUp(null);

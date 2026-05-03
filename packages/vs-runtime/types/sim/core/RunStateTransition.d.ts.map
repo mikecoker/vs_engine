@@ -1,0 +1,1 @@
+{"version":3,"file":"RunStateTransition.d.ts","sourceRoot":"","sources":["../../../src/sim/core/RunStateTransition.ts"],"names":[],"mappings":"AAAA,OAAO,EAAyB,KAAK,QAAQ,EAAE,MAAM,eAAe,CAAC;AACrE,OAAO,KAAK,EAAE,KAAK,EAAE,MAAM,mBAAmB,CAAC;AAE/C,wBAAgB,aAAa,CAAC,KAAK,EAAE,KAAK,EAAE,SAAS,EAAE,QAAQ,EAAE,MAAM,EAAE,MAAM,GAAG,IAAI,CAOrF"}

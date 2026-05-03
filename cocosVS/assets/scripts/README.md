@@ -26,6 +26,6 @@ Current controls:
 Current limitations:
 - visuals are debug primitives only
 - no authored prefabs or sprite assets yet
-- shared sim/client code now lives in `cocosVS/assets/vs-runtime`
-- root `src/client` and `src/sim` are compatibility symlinks into that package
-- Cocos scripts import directly from `assets/vs-runtime/src` so Creator only indexes one copy of the runtime
+- shared sim/client code now lives in `packages/vs-runtime`
+- Cocos scripts import the runtime package as `@vs-engine/runtime`
+- root `src/client` and `src/sim` are compatibility symlinks into the package source

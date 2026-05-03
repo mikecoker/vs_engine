@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { loadPrototypeContentRegistry } from "../../../src/sim/content/ContentLoader";
-import { ensureWeaponRuntimeStore } from "../../../src/sim/combat/WeaponRuntimeStore";
-import { extractRenderSnapshot } from "../../../src/sim/core/RenderExtract";
-import { RunState } from "../../../src/sim/core/RunState";
-import { mergeSimConfig } from "../../../src/sim/core/SimConfig";
-import { initializePlayerForRun } from "../../../src/sim/player/PlayerReset";
-import { createWorld } from "../../../src/sim/world/World";
+import { loadPrototypeContentRegistry } from "@vs-engine/runtime/src/sim/content/ContentLoader";
+import { ensureWeaponRuntimeStore } from "@vs-engine/runtime/src/sim/combat/WeaponRuntimeStore";
+import { extractRenderSnapshot } from "@vs-engine/runtime/src/sim/core/RenderExtract";
+import { RunState } from "@vs-engine/runtime/src/sim/core/RunState";
+import { mergeSimConfig } from "@vs-engine/runtime/src/sim/core/SimConfig";
+import { initializePlayerForRun } from "@vs-engine/runtime/src/sim/player/PlayerReset";
+import { createWorld } from "@vs-engine/runtime/src/sim/world/World";
 
 test("weapon render snapshot uses render views instead of runtime store arrays", () => {
   const world = createWorld(mergeSimConfig(), loadPrototypeContentRegistry(), RunState.Running, 59);

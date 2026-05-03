@@ -1,14 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { ensureWeaponRuntimeStore } from "../../../src/sim/combat/WeaponRuntimeStore";
-import { loadPrototypeContentRegistry } from "../../../src/sim/content/ContentLoader";
-import { initializePlayerForRun } from "../../../src/sim/player/PlayerReset";
-import { rollUpgradeChoices } from "../../../src/sim/progression/UpgradeRoller";
-import { ensureProgressionStore } from "../../../src/sim/progression/ProgressionStore";
-import { mergeSimConfig } from "../../../src/sim/core/SimConfig";
-import { RunState } from "../../../src/sim/core/RunState";
-import { createWorld } from "../../../src/sim/world/World";
+import { ensureWeaponRuntimeStore } from "@vs-engine/runtime/src/sim/combat/WeaponRuntimeStore";
+import { loadPrototypeContentRegistry } from "@vs-engine/runtime/src/sim/content/ContentLoader";
+import { initializePlayerForRun } from "@vs-engine/runtime/src/sim/player/PlayerReset";
+import { rollUpgradeChoices } from "@vs-engine/runtime/src/sim/progression/UpgradeRoller";
+import { ensureProgressionStore } from "@vs-engine/runtime/src/sim/progression/ProgressionStore";
+import { mergeSimConfig } from "@vs-engine/runtime/src/sim/core/SimConfig";
+import { RunState } from "@vs-engine/runtime/src/sim/core/RunState";
+import { createWorld } from "@vs-engine/runtime/src/sim/world/World";
 
 test("upgrade roller filters exhausted upgrades", () => {
   const content = loadPrototypeContentRegistry();

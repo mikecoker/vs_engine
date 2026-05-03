@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { DebugCommandQueue } from '../../../src/sim/debug/DebugCommands';
-import { DebugCounters } from '../../../src/sim/debug/DebugCounters';
-import { processDebugCommands } from '../../../src/sim/debug/DebugSystem';
-import type { RunState } from '../../../src/sim/core/RunState';
+import { DebugCommandQueue } from '@vs-engine/runtime/src/sim/debug/DebugCommands';
+import { DebugCounters } from '@vs-engine/runtime/src/sim/debug/DebugCounters';
+import { processDebugCommands } from '@vs-engine/runtime/src/sim/debug/DebugSystem';
+import type { RunState } from '@vs-engine/runtime/src/sim/core/RunState';
 
 function createWorldHarness() {
   const counters = new DebugCounters();

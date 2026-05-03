@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { adaptCocosInput, normalizeMovementAxes } from "../../../src/client/input/CocosInputAdapter";
+import { adaptCocosInput, normalizeMovementAxes } from "@vs-engine/runtime/src/client/input/CocosInputAdapter";
 
 test("normalizeMovementAxes clamps diagonal input to unit length", () => {
   const movement = normalizeMovementAxes(1, 1);

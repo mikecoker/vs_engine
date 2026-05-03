@@ -1,18 +1,18 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { loadPrototypeContentRegistry } from "../../../src/sim/content/ContentLoader";
-import type { FrameContext } from "../../../src/sim/core/FrameContext";
-import { RunState } from "../../../src/sim/core/RunState";
-import { mergeSimConfig } from "../../../src/sim/core/SimConfig";
+import { loadPrototypeContentRegistry } from "@vs-engine/runtime/src/sim/content/ContentLoader";
+import type { FrameContext } from "@vs-engine/runtime/src/sim/core/FrameContext";
+import { RunState } from "@vs-engine/runtime/src/sim/core/RunState";
+import { mergeSimConfig } from "@vs-engine/runtime/src/sim/core/SimConfig";
 import {
   PICKUP_MAGNET_DURATION_SECONDS,
   stepPickupMagnetSystem,
-} from "../../../src/sim/pickups/PickupMagnetSystem";
-import { stepPickupCollectSystem } from "../../../src/sim/pickups/PickupCollectSystem";
-import { applyPickupSpawnCommands } from "../../../src/sim/pickups/PickupSpawnSystem";
-import { ensurePickupStore } from "../../../src/sim/pickups/PickupStore";
-import { createWorld } from "../../../src/sim/world/World";
+} from "@vs-engine/runtime/src/sim/pickups/PickupMagnetSystem";
+import { stepPickupCollectSystem } from "@vs-engine/runtime/src/sim/pickups/PickupCollectSystem";
+import { applyPickupSpawnCommands } from "@vs-engine/runtime/src/sim/pickups/PickupSpawnSystem";
+import { ensurePickupStore } from "@vs-engine/runtime/src/sim/pickups/PickupStore";
+import { createWorld } from "@vs-engine/runtime/src/sim/world/World";
 
 function createPickupContext() {
   const world = createWorld(mergeSimConfig(), loadPrototypeContentRegistry(), RunState.Running, 17);

@@ -1,15 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { loadPrototypeContentRegistry } from "../../../src/sim/content/ContentLoader";
-import { createSim } from "../../../src/sim/core/Sim";
-import { RunState } from "../../../src/sim/core/RunState";
-import { ensureWeaponRuntimeStore } from "../../../src/sim/combat/WeaponRuntimeStore";
-import { applyUpgradeChoice } from "../../../src/sim/progression/UpgradeApply";
-import { ensureProgressionStore } from "../../../src/sim/progression/ProgressionStore";
-import { mergeSimConfig } from "../../../src/sim/core/SimConfig";
-import { initializePlayerForRun } from "../../../src/sim/player/PlayerReset";
-import { createWorld } from "../../../src/sim/world/World";
+import { loadPrototypeContentRegistry } from "@vs-engine/runtime/src/sim/content/ContentLoader";
+import { createSim } from "@vs-engine/runtime/src/sim/core/Sim";
+import { RunState } from "@vs-engine/runtime/src/sim/core/RunState";
+import { ensureWeaponRuntimeStore } from "@vs-engine/runtime/src/sim/combat/WeaponRuntimeStore";
+import { applyUpgradeChoice } from "@vs-engine/runtime/src/sim/progression/UpgradeApply";
+import { ensureProgressionStore } from "@vs-engine/runtime/src/sim/progression/ProgressionStore";
+import { mergeSimConfig } from "@vs-engine/runtime/src/sim/core/SimConfig";
+import { initializePlayerForRun } from "@vs-engine/runtime/src/sim/player/PlayerReset";
+import { createWorld } from "@vs-engine/runtime/src/sim/world/World";
 
 test("passive upgrades rebuild player runtime stats", () => {
   const content = loadPrototypeContentRegistry();

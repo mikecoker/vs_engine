@@ -1,9 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { loadPrototypeContentRegistry } from "../../../src/sim/content/ContentLoader";
-import { createSim } from "../../../src/sim/core/Sim";
-import { RunState } from "../../../src/sim/core/RunState";
+import { loadPrototypeContentRegistry } from "@vs-engine/runtime/src/sim/content/ContentLoader";
+import { createSim } from "@vs-engine/runtime/src/sim/core/Sim";
+import { RunState } from "@vs-engine/runtime/src/sim/core/RunState";
 
 test("pause prevents gameplay systems from executing", () => {
   const sim = createSim();

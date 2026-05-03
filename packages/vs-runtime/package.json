@@ -1,0 +1,31 @@
+{
+  "name": "@vs-engine/runtime",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "vs-runtime.es.js",
+  "module": "vs-runtime.es.js",
+  "typings": "types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "import": "./vs-runtime.es.js"
+    },
+    "./src/*": "./src/*.ts"
+  },
+  "scripts": {
+    "build": "npm run build:js && npm run build:types",
+    "build:js": "esbuild src/index.ts --bundle --format=esm --target=es2022 --outfile=vs-runtime.es.js --sourcemap",
+    "build:types": "tsc -p tsconfig.build.json"
+  },
+  "files": [
+    "vs-runtime.es.js",
+    "vs-runtime.es.js.map",
+    "types",
+    "src"
+  ],
+  "devDependencies": {
+    "typescript": "^5.8.0",
+    "esbuild": "^0.25.0"
+  }
+}

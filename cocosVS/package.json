@@ -1,6 +1,9 @@
 {
   "name": "VS",
   "uuid": "d200c172-4834-4fa1-933d-642f0c053975",
+  "dependencies": {
+    "@vs-engine/runtime": "file:../packages/vs-runtime"
+  },
   "creator": {
     "version": "3.8.8"
   }

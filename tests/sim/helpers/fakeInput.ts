@@ -1,4 +1,4 @@
-import type { SimInput } from '../../../src/sim/core/SimInput';
+import type { SimInput } from '@vs-engine/runtime/src/sim/core/SimInput';
 
 export function createNeutralInput(): SimInput {
   return {

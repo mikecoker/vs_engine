@@ -4,8 +4,8 @@ import {
   enemyArchetypeId,
   playerCharacterId,
   weaponId,
-} from '../../../src/sim/content/ContentIds';
-import { loadPrototypeContentRegistry } from '../../../src/sim/content/ContentLoader';
+} from '@vs-engine/runtime/src/sim/content/ContentIds';
+import { loadPrototypeContentRegistry } from '@vs-engine/runtime/src/sim/content/ContentLoader';
 
 test('prototype registry resolves starter definitions by durable ID', () => {
   const registry = loadPrototypeContentRegistry();

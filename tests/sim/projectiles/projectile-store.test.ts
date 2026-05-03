@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { loadPrototypeContentRegistry } from "../../../src/sim/content/ContentLoader";
-import { extractRenderSnapshot } from "../../../src/sim/core/RenderExtract";
-import { RunState } from "../../../src/sim/core/RunState";
-import { mergeSimConfig } from "../../../src/sim/core/SimConfig";
-import { ensureProjectileStore } from "../../../src/sim/projectiles/ProjectileStore";
-import { createWorld } from "../../../src/sim/world/World";
+import { loadPrototypeContentRegistry } from "@vs-engine/runtime/src/sim/content/ContentLoader";
+import { extractRenderSnapshot } from "@vs-engine/runtime/src/sim/core/RenderExtract";
+import { RunState } from "@vs-engine/runtime/src/sim/core/RunState";
+import { mergeSimConfig } from "@vs-engine/runtime/src/sim/core/SimConfig";
+import { ensureProjectileStore } from "@vs-engine/runtime/src/sim/projectiles/ProjectileStore";
+import { createWorld } from "@vs-engine/runtime/src/sim/world/World";
 
 test("projectile store keeps live slots stable after release", () => {
   const world = createWorld(mergeSimConfig(), loadPrototypeContentRegistry(), RunState.Running, 41);

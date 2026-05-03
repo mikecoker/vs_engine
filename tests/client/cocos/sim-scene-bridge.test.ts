@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { SimSceneBridge } from "../../../src/client/cocos/SimSceneBridge";
-import { createSim } from "../../../src/sim/core/Sim";
-import { loadPrototypeContentRegistry } from "../../../src/sim/content/ContentLoader";
+import { SimSceneBridge } from "@vs-engine/runtime/src/client/cocos/SimSceneBridge";
+import { createSim } from "@vs-engine/runtime/src/sim/core/Sim";
+import { loadPrototypeContentRegistry } from "@vs-engine/runtime/src/sim/content/ContentLoader";
 
 test("SimSceneBridge steps the sim and returns composed frame models", () => {
   const content = loadPrototypeContentRegistry();
