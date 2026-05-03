@@ -53,6 +53,11 @@ const SHARED_CHARACTER_SHEET: SharedSheetLayout = {
   },
 };
 
+const SPRITE_SHEET_RESOURCE_BY_KEY: Readonly<Record<string, string>> = {
+  pickup_xp_large: "sheets/pickupxp_large_sheet",
+  pickup_xp_medium: "sheets/pickupxp_medium_sheet",
+};
+
 function createTexture(image: ImageAsset): Texture2D {
   const texture = new Texture2D();
   texture.image = image;
@@ -177,9 +182,10 @@ export class CocosSpriteLibrary {
   }
 
   private loadStandaloneSprite(spriteKey: string): void {
-    resources.load(`sheets/${spriteKey}_sheet`, ImageAsset, (sheetError, sheetAsset) => {
+    const sheetResourceKey = SPRITE_SHEET_RESOURCE_BY_KEY[spriteKey] ?? `sheets/${spriteKey}_sheet`;
+    resources.load(sheetResourceKey, ImageAsset, (sheetError, sheetAsset) => {
       if (!sheetError && sheetAsset) {
-        const texture = this.getOrCreateTexture(`sheets/${spriteKey}_sheet`, sheetAsset);
+        const texture = this.getOrCreateTexture(sheetResourceKey, sheetAsset);
         this.pending.delete(spriteKey);
         this.frames.set(spriteKey, {
           frames: buildHorizontalFrames(texture, 4),
