@@ -69,11 +69,12 @@ export interface PassiveUpgradeDef extends BaseContentDef<PassiveUpgradeId> {
     readonly maxLevel: number;
     readonly modifiersByLevel: readonly (readonly StatModifierDef[])[];
 }
+export type PickupGrantKind = "xp" | "heal" | "magnet";
 export interface PickupDef extends BaseContentDef<PickupId> {
     readonly spriteKey: string;
     readonly radius: number;
     readonly magnetSpeed: number;
-    readonly grantKind: "xp" | "heal" | "magnet";
+    readonly grantKind: PickupGrantKind;
     readonly defaultValue: number;
 }
 export interface ProgressionCurveDef extends BaseContentDef<ProgressionCurveId> {

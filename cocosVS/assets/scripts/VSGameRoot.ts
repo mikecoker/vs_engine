@@ -21,6 +21,10 @@ import {
   DEFAULT_SIM_BOUNDS,
   loadPrototypeContentRegistry,
   type ClientFrame,
+  type EnemyViewModel,
+  type PickupViewModel,
+  type ProjectileViewModel,
+  type WeaponEffectViewModel,
 } from "@vs-engine/runtime";
 import { CocosEntityPool } from "./CocosEntityPool.ts";
 import { CocosInputState } from "./CocosInputState.ts";
@@ -116,9 +120,9 @@ export class VSGameRoot extends Component {
   private terrainWorldFrameKey = "";
   private terrainDebugMode: TerrainDebugMode = "blend";
   private terrainChunks: TerrainChunkRuntime[] = [];
-  private enemyPool: CocosEntityPool<ClientFrame["render"]["enemies"][number]> | null = null;
-  private projectilePool: CocosEntityPool<ClientFrame["render"]["projectiles"][number]> | null = null;
-  private pickupPool: CocosEntityPool<ClientFrame["render"]["pickups"][number]> | null = null;
+  private enemyPool: CocosEntityPool<EnemyViewModel> | null = null;
+  private projectilePool: CocosEntityPool<ProjectileViewModel> | null = null;
+  private pickupPool: CocosEntityPool<PickupViewModel> | null = null;
 
   protected onLoad(): void {
     this.followPlayer = true;
@@ -307,7 +311,7 @@ export class VSGameRoot extends Component {
 
   private syncRingNode(
     node: Node | null,
-    effect: ClientFrame["render"]["weaponEffects"][number] | null,
+    effect: WeaponEffectViewModel | null,
     centerX: number,
     centerY: number,
   ): void {
@@ -813,7 +817,7 @@ export class VSGameRoot extends Component {
     const halfWorldWidth = visible.width / (2 * this.worldScale);
     const halfWorldHeight = visible.height / (2 * this.worldScale);
 
-    let nearestPickup: ClientFrame["render"]["pickups"][number] | null = null;
+    let nearestPickup: PickupViewModel | null = null;
     let nearestDistanceSq = Number.POSITIVE_INFINITY;
     for (const pickup of frame.render.pickups) {
       if (!pickup.visible || pickup.grantKind !== grantKind) {

@@ -4,6 +4,7 @@ import test from "node:test";
 import { loadPrototypeContentRegistry } from "@vs-engine/runtime/src/sim/content/ContentLoader";
 import type { FrameContext } from "@vs-engine/runtime/src/sim/core/FrameContext";
 import { RunState } from "@vs-engine/runtime/src/sim/core/RunState";
+import type { SimConfig } from "@vs-engine/runtime/src/sim/core/SimConfig";
 import {
   createPlayerStore,
   initializePlayerForRun,
@@ -15,7 +16,7 @@ function createMovementContext(
   player: ReturnType<typeof createPlayerStore>,
   moveX: number,
   moveY: number,
-  configOverrides: Partial<FrameContext["config"]> = {},
+  configOverrides: Partial<SimConfig> = {},
 ): FrameContext {
   return {
     dt: 1 / 60,

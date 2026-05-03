@@ -1,5 +1,6 @@
 import type { ContentRegistry } from "../content/ContentRegistry.ts";
 import type { PassiveUpgradeDef, WeaponDef } from "../content/ContentTypes.ts";
+import type { SimContent } from "../core/SimApi.ts";
 import { ensureWeaponRuntimeStore } from "../combat/WeaponRuntimeStore.ts";
 import type { World } from "../world/World.ts";
 import type { ProgressionStore } from "./ProgressionStore.ts";
@@ -10,7 +11,7 @@ interface WeightedUpgradeCandidate {
   readonly weight: number;
 }
 
-function isContentRegistry(content: World["content"]): content is World["content"] & ContentRegistry {
+function isContentRegistry(content: SimContent): content is SimContent & ContentRegistry {
   const registry = content as Partial<ContentRegistry>;
   return (
     typeof content === "object" &&

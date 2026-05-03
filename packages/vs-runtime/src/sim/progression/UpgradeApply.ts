@@ -1,12 +1,13 @@
 import type { ContentRegistry } from "../content/ContentRegistry.ts";
 import { ensureWeaponRuntimeStore } from "../combat/WeaponRuntimeStore.ts";
+import type { SimContent } from "../core/SimApi.ts";
 import { applyPlayerStatModifiers } from "../player/PlayerStats.ts";
 import { rebuildPlayerRuntimeStats } from "../player/PlayerReset.ts";
 import type { World } from "../world/World.ts";
 import type { ProgressionStore } from "./ProgressionStore.ts";
 import type { UpgradeChoice } from "./UpgradeChoice.ts";
 
-function isContentRegistry(content: World["content"]): content is World["content"] & ContentRegistry {
+function isContentRegistry(content: SimContent): content is SimContent & ContentRegistry {
   const registry = content as Partial<ContentRegistry>;
   return (
     typeof content === "object" &&

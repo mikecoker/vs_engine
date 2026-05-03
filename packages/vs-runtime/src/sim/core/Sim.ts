@@ -1,4 +1,4 @@
-import type { DebugSnapshot } from "../debug/DebugSnapshot.ts";
+import type { DebugSnapshot, SystemDebugCounter, SystemName } from "../debug/DebugSnapshot.ts";
 import { extractRenderSnapshot } from "./RenderExtract.ts";
 import type { FrameContext } from "./FrameContext.ts";
 import type { RenderSnapshot } from "./RenderSnapshot.ts";
@@ -152,7 +152,7 @@ export class Sim implements SimApi {
             skippedTicks: counter.skippedTicks,
           },
         ]),
-      ) as DebugSnapshot["systems"],
+      ) as Record<SystemName, SystemDebugCounter>,
     };
   }
 

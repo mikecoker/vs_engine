@@ -1,5 +1,5 @@
 import type { ContentRegistry } from "../content/ContentRegistry.ts";
-import type { PickupDef } from "../content/ContentTypes.ts";
+import type { PickupDef, PickupGrantKind } from "../content/ContentTypes.ts";
 import type { SimContent } from "../core/SimApi.ts";
 import type { FrameContext } from "../core/FrameContext.ts";
 import { applyDamageToPlayer, tickPlayerInvulnerability } from "../player/PlayerApi.ts";
@@ -38,7 +38,7 @@ function getPickupIndexById(
   content: SimContent,
   pickupId: string,
   cache: WeakMap<object, number>,
-  fallbackGrantKind: PickupDef["grantKind"],
+  fallbackGrantKind: PickupGrantKind,
 ): number {
   if (!isContentRegistry(content)) {
     return -1;
